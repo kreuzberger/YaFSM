@@ -1,0 +1,19 @@
+0.9.6
++ Bugfix regular expression for method argument list
++ Do not generate viewer files with full path name
+
+0.9.5
++ Switch to QtTest, remove support for unittest++
+
+0.9.4
++ Bugfix trigger handling in substates if trigger is not
+  matched by a condition. Call parents trigger then
++ Bugfix event handling
++ Adding trace scopes for state, event and timer
++ extend xsd for better error detection
++ Bugfix parsing of xml special characters escape
+  in methods and conditions
+
+
+0.9.3
+Initial revision 

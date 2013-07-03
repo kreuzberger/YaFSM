@@ -1,0 +1,17 @@
+project ( testEventFSM)
+set( DESIRED_QT_VERSION 4 )
+
+INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR} )
+
+include(${QT_USE_FILE})
+
+INCLUDE_DIRECTORIES( ${QT_INCLUDE_DIR} )
+
+FSM_GENERATE(GENERATED_FSM_SRC EventFSM.xml)
+QT4_WRAP_CPP( GENERATED_TEST_MOC_HEADERS TestEventFSM.h)
+
+add_executable(testeventfsm TestEventFSM.cpp ${GENERATED_FSM_SRC} ${GENERATED_FSM_SRC_MOC_HEADERS} ${GENERATED_TEST_MOC_HEADERS})
+
+target_link_libraries(testeventfsm ${QT_LIBRARIES})
+add_test( TestEventFSM testeventfsm)
+

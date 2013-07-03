@@ -1,0 +1,30 @@
+<root>
+<definitions>
+  <action name="onRun" param=""/>
+  <action name="onError" param=""/>
+  <action name="showColor" param="const NTrafficLight::Color&amp; color"/>
+  <trigger name="run" param=""/>
+  <trigger name="error" param=""/>
+  <trigger name="blink" param="bool&amp; bOn"/>
+  <timer name="red" ms="4000"/>
+  <timer name="yellow" ms="500"/>
+  <timer name="green" ms="5000"/>
+  <timer name="blinkYellow" ms="200"/>
+  <include file="TrafficLightDefines.h"/>
+</definitions>
+<fsm>
+  <state name="error" type="entry"/>
+  <state name="run">
+    <state name="red" type="entry" enter="showColor(NTrafficLight::Red)" tstartenter="red" />
+    <state name="redyellow" type="entry" enter="showColor(NTrafficLight::RedYellow)" tstartenter="yellow" />
+    <state name="green" enter="showColor(NTrafficLight::Green)" tstartenter="green" />
+    <state name="yellow" enter="showColor(NTrafficLight::Yellow)" tstartenter="yellow" />
+    <transition trigger="timerred" begin="red" end="redyellow"/>
+    <transition trigger="timeryellow" begin="redyellow" end="green"/>
+    <transition trigger="timeryellow" begin="yellow" end="red"/>
+    <transition trigger="timergreen" begin="green" end="yellow"/>
+</state>
+  <transition trigger="run" action="onRun()" begin="error" end="run"/>
+  <transition trigger="error" action="onError()" begin="run" end="error"/>
+</fsm>
+</root>

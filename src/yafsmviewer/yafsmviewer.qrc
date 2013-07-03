@@ -1,0 +1,17 @@
+<!DOCTYPE RCC><RCC version="1.0">
+ <qresource>
+   <file>images/zoomin.png</file>
+   <file>images/zoomout.png</file>
+   <file>images/qtlogo-64.png</file>
+   <file>images/standardbutton-open-16.png</file>
+   <file>images/standardbutton-open-32.png</file>
+   <file>images/standardbutton-open-128.png</file>
+   <file>images/standardbutton-close-16.png</file>
+   <file>images/standardbutton-close-32.png</file>
+   <file>images/standardbutton-close-128.png</file>
+   <file>images/standardbutton-help-16.png</file>
+   <file>images/standardbutton-help-32.png</file>
+   <file>images/standardbutton-help-128.png</file>
+
+ </qresource>
+ </RCC>

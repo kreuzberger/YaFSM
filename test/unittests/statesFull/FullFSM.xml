@@ -1,0 +1,24 @@
+<root>
+<definitions>
+  <action name="onRun" param=""/>
+  <action name="onEnterRun" param=""/>
+  <action name="onExitRun" param=""/>
+  <trigger name="run" param="bool bShouldI, bool bShouldINot"/>
+  <trigger name="end" param=""/>
+</definitions>
+<fsm>
+  <state name="stop" type="entry"/>
+  <state name="run">
+    <state name="running" type="entry" enter="onEnterRun()" exit="onExitRun()">
+      <state name="deep1" type="entry">
+        <state name="deep2" type="entry">
+          <state name="deep3" type="entry">
+          </state>
+        </state>
+      </state>
+    </state>
+  </state>
+  <transition trigger="run" action="onRun()" begin="stop" end="run" condition="true == bShouldI"/>
+  <transition trigger="end" begin="run" end="stop"/>
+</fsm>
+</root>
