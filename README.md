@@ -56,13 +56,13 @@ Usage of the generator
 
 An example for use of the generator is given in src/perl/CmakeLists.txt
 
-perl -f YaFsm.pl --fsm=<xml-file> --genview --gencode
+  perl -f YaFsm.pl --fsm=<xml-file> --genview --gencode
 
 This will generate the source code and viewer input files into subdirectories of the current directoy.
 
 You can also give the name of the output directory via cmd line. To list all available options just call
 
-perl -f YaFsm.pl --help
+  perl -f YaFsm.pl --help
 
 Compilation
 -----------
