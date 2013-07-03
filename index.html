@@ -37,7 +37,79 @@
 <li>XML Definition to design Finite State Machines</li>
 <li>perl base generator to generate c++ code out of the XML description in pure c++ or using qt</li>
 <li>qt based viewer for generated diagrams of the fsm</li>
-</ul>
+</ul><p>YaFSM is a perl based script to generate Code and a graphical representation for an Finite State Machine implementation out of an XML description of the FSM.</p>
+
+<p>YaFSM features</p>
+
+<ul>
+<li>code generation for C++</li>
+<li>  generation of fsm graphical representation via html and SVG</li>
+<li>  standalone viewer for the generated fsm graphical representation</li>
+<li>  full featured implementation supporting timer and events with Qt 4</li>
+<li>  possibility to implement timer and events with custom framework</li>
+<li>  examples and tests</li>
+<li>  works on linux and windows</li>
+</ul><h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>The YaFSM generator is a perl script bundle that is used to generate</p>
+
+<ul>
+<li>code</li>
+<li>descriptions</li>
+<li>images</li>
+</ul><p>from a single xml based FSM description.</p>
+
+<p>To use it simple call the main perl script along with the command line arguments.
+The complete argument list could be printed with the –man or –help command line option
+YaFsm.pl –verbose</p>
+
+<h2>
+<a name="xml-file" class="anchor" href="#xml-file"><span class="octicon octicon-link"></span></a>XML File</h2>
+
+<p>Input for the YaFSM generator is a xml description of the state engine. Details on the xml tags are given in Apppendix xx. You can edit the file with any text editor you like.
+To verify the xml file you can test it agains the given xsd schema file ,that can be found in the xml directory.</p>
+
+<p>On Linux you could use xmllint, on windows e.g. xmlstarlet</p>
+
+<p>xmllint -s yafsm.xsd </p>
+
+<p>On Linux you could use xmllint, on windows e.g. xmlstarlet</p>
+
+<h2>
+<a name="usage-of-the-generator" class="anchor" href="#usage-of-the-generator"><span class="octicon octicon-link"></span></a>Usage of the generator</h2>
+
+<p>An example for use of the generator is given in src/perl/CmakeLists.txt</p>
+
+<pre><code>perl -f YaFsm.pl --fsm=&lt;xml-file&gt; --genview --gencode
+</code></pre>
+
+<p>This will generate the source code and viewer input files into subdirectories of the current directoy.</p>
+
+<p>You can also give the name of the output directory via cmd line. To list all available options just call</p>
+
+<pre><code>perl -f YaFsm.pl --help
+</code></pre>
+
+<h2>
+<a name="compilation" class="anchor" href="#compilation"><span class="octicon octicon-link"></span></a>Compilation</h2>
+
+<p>The fsm code generator has not to be build into an executable, cause it is a perl script. So its ready to use on linux and windows. On Windows you should use ActivePerl. On Linux you have to install the xmlsimple perl package from your distribution or also use ActivePerl.</p>
+
+<p>The YaFsmViewer can be compiled using the provided cmake scripts. Be aware that for unit tests the unittest++ framework is used and for the YaFsmViewer QT &gt;= 4.5.2 is required.</p>
+
+<p>The generated source code will not compile if used out of the example build tree, cause some include and source code files are missing. These files must be copied „by hand“ or by our build environment to the generated source code or e.g linked by a library. This has the advantage that you could use our own implementation and framework for the timer and event handling. Provided is an implementation for Qt4 (full featured) and a standard C++ implementation (no timers and events could be used in the fsm)</p>
+
+<h2>
+<a name="the-yafsmviewer" class="anchor" href="#the-yafsmviewer"><span class="octicon octicon-link"></span></a>The YaFsmViewer</h2>
+
+<p>The  files for the YaFsmViewer are generated into a seperated directory. This directory contains several files for each state hierarchy level</p>
+
+<ul>
+<li>.dot: Generated dot file for the state, use to generate html maps and image files with Graphviz dot</li>
+<li>.html: Html file with a map definition to display in the viewers QWebKit View</li>
+<li>.: Generated image file used by the map, default are SVG image files have full zooming capability in the viewer</li>
+</ul><p>To view the files in the viewer, just open the generated file „index.txt“ in the viewer or start the viewer with the file path from commandline.</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/kreuzberger">kreuzberger</a></p>
