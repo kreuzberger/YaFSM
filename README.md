@@ -56,13 +56,13 @@ Usage of the generator
 
 An example for use of the generator is given in src/perl/CmakeLists.txt
 
-  perl -f YaFsm.pl --fsm=<xml-file> --genview --gencode
+    perl -f YaFsm.pl --fsm=<xml-file> --genview --gencode
 
 This will generate the source code and viewer input files into subdirectories of the current directoy.
 
 You can also give the name of the output directory via cmd line. To list all available options just call
 
-  perl -f YaFsm.pl --help
+    perl -f YaFsm.pl --help
 
 Compilation
 -----------
@@ -79,17 +79,9 @@ The YaFsmViewer
 
 The  files for the YaFsmViewer are generated into a seperated directory. This directory contains several files for each state hierarchy level
 
-    <state>.dot:
-
-Generated dot file for the state, use to generate html maps and image files with Graphviz dot
-
-    <state>.html:
-
-Html file with a map definition to display in the viewers QWebKit View
-
-    <state>.<GeneratedImageType>:
-
-Generated image file used by the map, default are SVG image files have full zooming capability in the viewer
+* <state>.dot: Generated dot file for the state, use to generate html maps and image files with Graphviz dot
+* <state>.html: Html file with a map definition to display in the viewers QWebKit View
+* <state>.<GeneratedImageType>: Generated image file used by the map, default are SVG image files have full zooming capability in the viewer
 
 To view the files in the viewer, just open the generated file „index.txt“ in the viewer or start the viewer with the file path from commandline.
 
