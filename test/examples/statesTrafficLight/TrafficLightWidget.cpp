@@ -1,4 +1,5 @@
 #include "TrafficLightWidget.h"
+#include "TrafficLightFSM.h"
 
 bool LightWidget::isOn() const
 {
@@ -33,6 +34,26 @@ void LightWidget::paintEvent(QPaintEvent *)
     painter.drawEllipse(0, 0, width(), height());
 }
 
+void TrafficLightWidget::setFSM(TrafficLightFSM* pFSM)
+{
+  mpoFSM = pFSM;
+}
+
+
+void TrafficLightWidget::onErrorToggled(bool bChecked)
+{
+  if(mpoFSM)
+  {
+    if(bChecked)
+    {
+      mpoFSM->error();
+    }
+    else
+    {
+      mpoFSM->run();
+    }
+  }
+}
 
 LightWidget * TrafficLightWidget::redLight() const
 {
@@ -51,6 +72,7 @@ LightWidget * TrafficLightWidget::greenLight() const
 
 TrafficLightWidget::TrafficLightWidget(QWidget *parent)
     : QWidget(parent)
+    , mpoFSM(0)
 {
     QVBoxLayout *vbox = new QVBoxLayout(this);
     m_red = new LightWidget(Qt::red);
@@ -59,8 +81,13 @@ TrafficLightWidget::TrafficLightWidget(QWidget *parent)
     vbox->addWidget(m_yellow);
     m_green = new LightWidget(Qt::green);
     vbox->addWidget(m_green);
+    m_ErrorBtn = new QPushButton("&Error", this);
+    m_ErrorBtn->setCheckable(true);
+    vbox->addWidget(m_ErrorBtn);
     QPalette pal = palette();
     pal.setColor(QPalette::Background, Qt::black);
     setPalette(pal);
     setAutoFillBackground(true);
+
+    connect(m_ErrorBtn, SIGNAL(toggled(bool)),&self(), SLOT(onErrorToggled(bool)));
 }

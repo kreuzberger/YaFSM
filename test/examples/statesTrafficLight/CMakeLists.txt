@@ -8,7 +8,10 @@ INCLUDE_DIRECTORIES( ${QT_INCLUDE_DIR} )
 FSM_GENERATE(GENERATED_FSM_SRC TrafficLightFSM.xml)
 #INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR} )
 #QT4_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/FullFSM/code/FSMTimer.h)
-add_executable(trafficlight main.cpp TrafficLight.cpp TrafficLightWidget.cpp ${GENERATED_FSM_SRC} ${GENERATED_FSM_SRC_MOC_HEADERS})
+set (FOO_MOC_HEADERS TrafficLightWidget.h)
+
+QT4_WRAP_CPP( FOO_MOC_OUTFILES ${FOO_MOC_HEADERS} )
+add_executable(trafficlight main.cpp TrafficLight.cpp TrafficLightWidget.cpp ${FOO_MOC_OUTFILES} ${GENERATED_FSM_SRC} ${GENERATED_FSM_SRC_MOC_HEADERS})
 #add_custom_target( GenerateFSM ALL
 #  DEPENDS ${FSM_SRC}
 #  )

@@ -4,8 +4,10 @@
 
 #include <QtGui>
 
+class TrafficLightFSM;
 class LightWidget : public QWidget
 {
+  Q_OBJECT
 public:
     LightWidget(const QColor &color, QWidget *parent = 0)
         : QWidget(parent), m_color(color), m_on(false) {}
@@ -27,6 +29,7 @@ private:
 
 class TrafficLightWidget : public QWidget
 {
+  Q_OBJECT
 public:
     TrafficLightWidget(QWidget *parent = 0);
 
@@ -34,12 +37,22 @@ public:
     LightWidget *redLight() const;
     LightWidget *yellowLight() const;
     LightWidget *greenLight() const;
+    void setFSM(TrafficLightFSM*);
 
+public slots:
+    void onErrorToggled(bool);
 private:
     LightWidget *m_red;
     LightWidget *m_yellow;
     LightWidget *m_green;
+    QPushButton* m_ErrorBtn;
+    TrafficLightFSM* mpoFSM;
+    TrafficLightWidget& self();
 };
 
+inline TrafficLightWidget& TrafficLightWidget::self()
+{
+  return *this;
+}
 
 #endif // TRAFFICLIGHTWIDGET_H

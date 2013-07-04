@@ -7,16 +7,21 @@
   <trigger name="error" param=""/>
   <trigger name="blink" param="bool&amp; bOn"/>
   <timer name="red" ms="4000"/>
-  <timer name="yellow" ms="500"/>
+  <timer name="yellow" ms="1000"/>
   <timer name="green" ms="5000"/>
-  <timer name="blinkYellow" ms="200"/>
+  <timer name="blinkYellow" ms="600"/>
   <include file="TrafficLightDefines.h"/>
 </definitions>
 <fsm>
-  <state name="error" type="entry"/>
+  <state name="error" type="entry">
+    <state name="blink_yellow" type="entry" enter="showColor(NTrafficLight::Yellow)" tstartenter="blinkYellow"/>
+    <state name="blink_none" enter="showColor(NTrafficLight::None)" tstartenter="blinkYellow"/>
+    <transition trigger="timerblinkYellow" begin="blink_yellow" end="blink_none"/>
+    <transition trigger="timerblinkYellow" begin="blink_none" end="blink_yellow"/>
+  </state>
   <state name="run">
     <state name="red" type="entry" enter="showColor(NTrafficLight::Red)" tstartenter="red" />
-    <state name="redyellow" type="entry" enter="showColor(NTrafficLight::RedYellow)" tstartenter="yellow" />
+    <state name="redyellow" enter="showColor(NTrafficLight::RedYellow)" tstartenter="yellow" />
     <state name="green" enter="showColor(NTrafficLight::Green)" tstartenter="green" />
     <state name="yellow" enter="showColor(NTrafficLight::Yellow)" tstartenter="yellow" />
     <transition trigger="timerred" begin="red" end="redyellow"/>

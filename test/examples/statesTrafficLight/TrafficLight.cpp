@@ -10,6 +10,7 @@ TrafficLight::TrafficLight()
   mTrafficLightWidget.show();
   mTrafficLightFSM.initFSM();
   mTrafficLightFSM.run();
+  mTrafficLightWidget.setFSM(&mTrafficLightFSM);
 
 };
 TrafficLight::~TrafficLight()
