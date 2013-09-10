@@ -2,6 +2,7 @@
  <qresource>
    <file>images/zoomin.png</file>
    <file>images/zoomout.png</file>
+   <file>images/reload.png</file>
    <file>images/qtlogo-64.png</file>
    <file>images/standardbutton-open-16.png</file>
    <file>images/standardbutton-open-32.png</file>

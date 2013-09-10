@@ -22,6 +22,7 @@ MainWindow::MainWindow()
   centralWidget->webView->addAction(zoomInAct);
   centralWidget->webView->addAction(zoomOutAct);
   centralWidget->webView->addAction(zoomNormalAct);
+  centralWidget->webView->addAction(reloadAct);
 }
 
 MainWindow::~MainWindow()
@@ -63,6 +64,11 @@ void MainWindow::createActions()
   zoomNormalAct = new QAction(tr("Zoom 100%"), this);
   zoomNormalAct->setStatusTip(tr("Zoom 100%"));
   connect(zoomNormalAct, SIGNAL(triggered()), this, SLOT(zoomNormal()));
+
+  reloadAct = new  QAction(QIcon(":/images/reload.png"), tr("Reload"), this);
+  reloadAct->setStatusTip(tr("Reload"));
+  reloadAct->setShortcut(Qt::Key_F5);
+  connect(reloadAct,SIGNAL(triggered()), this, SLOT(reload()));
 }
 
 void MainWindow::createMenus()
@@ -76,6 +82,7 @@ void MainWindow::createMenus()
   stateViewMenu->addAction(zoomInAct);
   stateViewMenu->addAction(zoomOutAct);
   stateViewMenu->addAction(zoomNormalAct);
+  stateViewMenu->addAction(reloadAct);
 
   menuBar()->addSeparator();
 
@@ -89,6 +96,7 @@ void MainWindow::createToolBar()
   viewToolBar = addToolBar(tr("View"));
   viewToolBar->addAction(zoomInAct);
   viewToolBar->addAction(zoomOutAct);
+  viewToolBar->addAction(reloadAct);
   spinZoom = new QSpinBox();
   spinZoom->setMinimum(1);
   spinZoom->setMaximum(400);
@@ -158,11 +166,11 @@ void MainWindow::readDataFromFile(const QString& fileName)
 
   centralWidget->fsmView->setColumnHidden(1,true); // fuer debug zwecke ein
   centralWidget->fsmView->setColumnHidden(2,true); // fuer debug zwecke ein
-  centralWidget->webView->setUrl(QUrl("about:blank"));
+  centralWidget->webView->setUrl(QUrl());
   centralWidget->fsmView->setCurrentIndex(mpStateModel->index(0,1));
 
   emit activated(mpStateModel->index(0,1));
-
+  reload();
   file.close();
 }
 
@@ -263,10 +271,16 @@ void MainWindow::zoomPercent( int iPercent)
   centralWidget->webView->setZoomFactor(iPercent*1.0/100.0);
 }
 
+void MainWindow::reload()
+{
+  centralWidget->webView->triggerPageAction(QWebPage::Reload);
+  //fprintf(stderr,"reload\n",qPrintable(centralWidget->webView->url().path()));
+}
+
 void MainWindow::urlChanged(const QUrl& url)
 {
   QString strUrl = url.toLocalFile();
-  //printf("url: %s\n",qPrintable(strUrl));
+//  fprintf(stderr,"url changed to: %s\n",qPrintable(strUrl));
 
   QModelIndexList indexList = mpStateModel->find( mpStateModel->index(0,0),Qt::DisplayRole , strUrl);
   if( 1 == indexList.count() )

@@ -38,6 +38,7 @@ public slots:
   void zoomNormal( void );
   void zoomPercent( int );
   void urlChanged(const QUrl&);
+  void reload();
 
 private:
   YaFsmViewer *centralWidget;
@@ -52,6 +53,7 @@ private:
   QAction *zoomInAct;
   QAction *zoomOutAct;
   QAction *zoomNormalAct;
+  QAction *reloadAct;
   QSpinBox *spinZoom;
 
   void createActions();
