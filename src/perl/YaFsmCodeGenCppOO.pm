@@ -260,7 +260,6 @@ sub outFSMHeader
   print $fh "\n// forward declarations\n";
   print $fh "class " . $FSMName . "StateBase;\n";
 
-
   # print $fh "#include \"ProUnit_" . $FSMName . "_.h\"\n";
   print $fh "\nclass " . $FSMName . ": public I" . $FSMName . "\n";
   print $fh " , public IFSMTimerCB\n";
@@ -272,7 +271,7 @@ sub outFSMHeader
 
   foreach my $state (@YaFsmParser::gFSMStates)
   {
-    print $fh '  friend class State' . $state . ";\n";
+    print $fh '  friend class N' . $FSMName . '::State' . $state . ";\n";
   }
 
   print $fh "\n";
@@ -441,7 +440,7 @@ sub outFSMHeader
   print $fh "  // definition of all states as members\n";
   foreach my $state (@YaFsmParser::gFSMStates)
   {
-    print $fh "  State". $state . " moState" . $state . ";\n";
+    print $fh "  N" . $FSMName. "::State". $state . " moState" . $state . ";\n";
   }
   print $fh "  std::map<std::string, " . $FSMName ."StateBase*> moStateMap;\n";
   print $fh "  std::map<std::string, int> moStateCoverageMap;\n";
@@ -924,11 +923,20 @@ sub outFSMStates
   print $fhH "\n";
   print $fhH "// definitions of all States as classes\n";
 
+  print $fhH "namespace N". $FSMName . "\n";
+  print $fhH "{\n";
+
+
   print $fhS '#include "' . $FSMName . "StateImpl.h\"\n";
   print $fhS '#include "' . $FSMName . ".h\"\n";
 
+  print $fhS "namespace N". $FSMName . "\n";
+  print $fhS "{\n";
+
   parseFSM($fhH,$fhS,$YaFsmParser::gFSM->{fsm},"","",\@{$genTransitions});
 
+  print $fhH "}\n";
+  print $fhS "}\n";
   # close header
   print $fhH "#endif\n";
   close( $fhH );
@@ -1142,7 +1150,7 @@ sub genStateImpl
       print $fhS "{\n";
 
     }
-    print $fhS "}\n\n";
+    print $fhS "};\n\n";
 
     #print $fh "}>\n";
 
