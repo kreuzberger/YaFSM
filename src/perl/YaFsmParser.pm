@@ -306,6 +306,8 @@ sub hasStateActions
      || defined $state->{tstopenter}
      || defined $state->{tstartexit}
      || defined $state->{tstopexit}
+     || defined $state->{evententer}
+     || defined $state->{eventexit}
     )
   {
    	YaFsm::printDbg("Found state enter/exit/timer actions in state $state->{name}");
@@ -323,6 +325,7 @@ sub hasStateEnterActions
   if(defined $state->{enter}
      || defined $state->{tstartenter}
      || defined $state->{tstopenter}
+     || defined $state->{evententer}
     )
   {
     $hasStateActions = 1;
@@ -339,6 +342,7 @@ sub hasStateExitActions
   if(defined $state->{exit}
      || defined $state->{tstartexit}
      || defined $state->{tstopexit}
+     || defined $state->{eventexit}
     )
   {
     $hasStateActions = 1;

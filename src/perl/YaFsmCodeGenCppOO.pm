@@ -359,7 +359,7 @@ sub outFSMHeader
   {
     #YaFsm::printDbg("trigger: $key ( $value )");
     print $fh "  virtual void set" . $key ."($value->{type} val);\n";
-    print $fh "  virtual $value->{type} get" . $key ."(void);\n";
+    print $fh "  virtual $value->{type} get" . $key ."(void) const;\n";
   }
 
   print $fh "// for getting statistics information\n";
@@ -704,7 +704,7 @@ sub outFSMHeader
     print $fh "  }\n";
     print $fh "}\n";
     print $fh "\n";
-    print $fh "inline $value->{type} " . $FSMName ."::get" . $key ."(void)\n";
+    print $fh "inline $value->{type} " . $FSMName ."::get" . $key ."(void) const\n";
     print $fh "{\n";
     print $fh "  return mpoCurrentState->get" . $key . "();\n";
     print $fh "}\n";
@@ -858,7 +858,7 @@ sub outFSMStateBaseHeader
   {
     #YaFsm::printDbg("trigger: $key ( $value )");
     print $fh "void set" . $key ."($value->{type} val);\n";
-    print $fh "$value->{type} get" . $key ."(void);\n";
+    print $fh "$value->{type} get" . $key ."(void) const;\n";
   }
   print $fh "\n";
 
@@ -893,7 +893,7 @@ print $fh "};\n";
     print $fh "  m$key = val;\n";
     print $fh "}\n";
     print $fh "\n";
-    print $fh "inline $value->{type} " . $FSMName ."StateBase::get" . $key ."(void)\n";
+    print $fh "inline $value->{type} " . $FSMName ."StateBase::get" . $key ."(void) const\n";
     print $fh "{\n";
     print $fh "  return m$key;\n";
     print $fh "}\n";
@@ -1073,6 +1073,16 @@ sub genStateImpl
           print $fhS "  fsmImpl.getActionHandler()." . $_ .";\n";
         }
       }
+
+      if(defined $state->{evententer})
+      {
+        my @eventArray = split(/;/,$state->{evententer});
+        foreach(@eventArray)
+        {
+          print $fhS "  fsmImpl.sendEventID(" . $YaFsmParser::gFSMName .'::EVENT_'.uc($_).");\n";
+        }
+      }
+
     }
 
     if( defined $enterStateName )
@@ -1115,6 +1125,16 @@ sub genStateImpl
           print $fhS "  fsmImpl.getActionHandler()." . $_ . ";\n";
         }
       }
+
+      if(defined $state->{eventexit})
+      {
+        my @eventArray = split(/;/,$state->{eventexit});
+        foreach(@eventArray)
+        {
+          print $fhS "  fsmImpl.sendEventID(" . $YaFsmParser::gFSMName .'::EVENT_'.uc($_).");\n";
+        }
+      }
+
     }
     else
     {

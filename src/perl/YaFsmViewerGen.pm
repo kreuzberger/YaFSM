@@ -306,6 +306,29 @@ sub genDotFile
               }
             }
           }
+
+          if(defined $state->{evententer})
+          {
+            my @list = split(';',$state->{evententer});
+            foreach (@list)
+            {
+              if($gUseImages)
+              {
+                #print $fh "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+                print $fh "<IMG SRC=\"images/enter.$YaFsmParser::gImageExt\"/>^$_<br/>";
+                print $fhWallpaper "<IMG SRC=\"images/enter.$YaFsmParser::gImageExt\"/>^$_<br/>";
+              }
+              else
+              {
+                #print $fh "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
+                #print $fhWallpaper "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
+                print $fh "^$_<br/>";
+                print $fhWallpaper "^$_<br/>";
+              }
+            }
+          }
+
           print $fh "</TD></TR>";
           print $fhWallpaper "</TD></TR>";
           print $fh "</TABLE></FONT>";
@@ -381,6 +404,28 @@ sub genDotFile
               }
             }
           }
+
+          if(defined $state->{eventexit})
+          {
+            my @list = split(';',$state->{eventexit});
+            foreach (@list)
+            {
+              if($gUseImages)
+              {
+                #print $fh "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+                print $fh "<IMG SRC=\"images/exit.$YaFsmParser::gImageExt\"/>^$_<br/>";
+                print $fhWallpaper "<IMG SRC=\"images/exit.$YaFsmParser::gImageExt\"/>^$_<br/>";
+              }
+              else
+              {
+                #print $fh "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
+                #print $fhWallpaper "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
+                print $fh "^$_<br/>";
+                print $fhWallpaper "^$_<br/>";
+              }
+            }
+          }
           print $fh "</TD></TR>";
           print $fhWallpaper "</TD></TR>";
           print $fh "</TABLE></FONT>";
@@ -442,7 +487,7 @@ sub genDotTypeFile
   {
     $outDotTypeFileImgPath = $filename .'.' . $YaFsmParser::gFSMGenDotType;
   }
-  
+
   my $outDotMapFilePath = $YaFsmParser::gFSMViewOutPath . '/' . $filename .'.map';
   my $outDotFilePath = $YaFsmParser::gFSMViewOutPath . '/' . $filename .'.dot';
 
