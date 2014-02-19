@@ -85,3 +85,4 @@ The  files for the YaFsmViewer are generated into a seperated directory. This di
 
 To view the files in the viewer, just open the generated file „index.txt“ in the viewer or start the viewer with the file path from commandline.
 
+[](https://raw2.github.com/kreuzberger/YaFSM/master/doc/yafsmviewer/YaFsmViewer_TrafficLightStateRun.png)
