@@ -69,7 +69,7 @@ endmacro( FSM_GENERATE )
 
 
 
-install( PROGRAMS yafsmgen DESTINATION "yafsm")
+install( PROGRAMS yafsmgen DESTINATION "bin")
 install( FILES YaFsm.pl YaFsm.pm YaFsmCodeGen.pm YaFsmCodeGenCppOO.pm YaFsmParser.pm YaFsmViewerGen.pm "${CMAKE_SOURCE_DIR}/src/xml/yafsm.xsd" DESTINATION "yafsm")
 install( DIRECTORY codeimpl DESTINATION "yafsm")
 install( DIRECTORY images DESTINATION "yafsm")
