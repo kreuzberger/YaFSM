@@ -67,6 +67,12 @@ endmacro( FSM_GENERATE )
 #endif( FSM_SRC )
 
 
-#add_custom_target( GenerateFSM ALL
-#  DEPENDS ${FSM}
-#  )
+
+
+install( PROGRAMS yafsmgen DESTINATION "yafsm")
+install( FILES YaFsm.pl YaFsm.pm YaFsmCodeGen.pm YaFsmCodeGenCppOO.pm YaFsmParser.pm YaFsmViewerGen.pm "${CMAKE_SOURCE_DIR}/src/xml/yafsm.xsd" DESTINATION "yafsm")
+install( DIRECTORY codeimpl DESTINATION "yafsm")
+install( DIRECTORY images DESTINATION "yafsm")
+
+
+

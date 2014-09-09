@@ -606,7 +606,7 @@ sub outFSMHeader
   print $fh "  std::ostringstream stream;\n";
   print $fh "  (void) iEventID;\n";
 
-  if(defined @YaFsmParser::gFSMEvents)
+  if(@YaFsmParser::gFSMEvents)
   {
     # definition of all timers as enumeration
     print $fh "\n";

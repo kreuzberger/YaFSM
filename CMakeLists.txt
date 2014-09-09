@@ -21,4 +21,5 @@ include(CTest)
 #ADD_DEFINITIONS( ${QT_DEFINITIONS} )
 add_subdirectory(src)
 add_subdirectory(test)
+add_subdirectory(doc)
 
