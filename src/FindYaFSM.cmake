@@ -4,24 +4,28 @@
 
 
 
-if( YAFSM_INCLUDE_DIRS )
+if( NOT "${YAFSM_SCRIPT}" STREQUAL "" AND NOT "${YAFSM_SCRIPT}" STREQUAL "YAFSM_SCRIPT-NOTFOUND")
   set( YAFSM_FOUND true )
 else()
   find_program(XMLLINT_EXECUTABLE xmllint )
-  find_file(YAFSM_SCRIPT
-            NAMES YaFsm.pl
-            PATHS  $ENV{PATH} /usr/local/yafsm )
-
-  find_path(YAFSM_INCLUDE_DIR
-    NAMES YaFsm.pl
-    PATHS $ENV{PATH} /usr/local/yafsm )
+  if( UNIX )
+    find_file(YAFSM_SCRIPT
+              NAMES YaFsm.pl
+              PATHS  $ENV{PATH} /usr/local/yafsm
+              DOC "Perl script YaFsm.pl" )
+  else()
+    find_file(YAFSM_SCRIPT
+              NAMES YaFsm.pl
+              PATHS  $ENV{PATH} "$ENV{PROGRAMFILES}/YaFsm/yafsm" "$ENV{PROGRAMFILES(x86}/YaFsm/yafsm"
+              DOC "Perl script YaFsm.pl" )
+  endif()
 
   find_program(PERL_EXECUTABLE
            NAMES perl perl.exe )
 
   if( YAFSM_SCRIPT STREQUAL "YAFSM_SCRIPT-NOTFOUND" )
-    set( USE_YAFSM false )
     set( YAFSM_INCLUDE_DIR )
+    set( YAFSM_FOUND false )
   else()
     if( NOT PERL_EXECUTABLE STREQUAL "PERL_EXECUTABLE-NOTFOUND" )
       set( YAFSM_FOUND true )
@@ -41,13 +45,16 @@ else()
   endif()
 endif()
 
-if(NOT "${YAFSM_SCRIPT}" STREQUAL "YAFSM_SCRIPT-NOTFOUND")
-  set( YAFSM_COMMAND "${PERL_EXECUTABLE} -I${YAFSM_INCLUDE_DIR} -f ${YAFSM_SCRIPT}")
-endif()
 
 
 set( YAFSM_USE_FILE ${CMAKE_CURRENT_LIST_DIR}/FindYaFSM.cmake)
-set( YAFSM_INCLUDE_DIRS ${YAFSM_INCLUDE_DIR} )
+
+if( YAFSM_FOUND )
+ get_filename_component( YAFSM_INCLUDE_DIR ${YAFSM_SCRIPT} DIRECTORY )
+ set( YAFSM_INCLUDE_DIRS ${YAFSM_INCLUDE_DIR} )
+ set( YAFSM_COMMAND "${PERL_EXECUTABLE} -I${YAFSM_INCLUDE_DIR} -f ${YAFSM_SCRIPT}")
+
+ endif()
 
 macro (YAFSM_GENERATE outfiles)
   foreach( it ${ARGN})
@@ -102,5 +109,5 @@ macro (YAFSM_GENERATE outfiles)
  endforeach( it )
 endmacro( YAFSM_GENERATE )
 
-mark_as_advanced( YAFSM_INCLUDE_DIRS )
+#mark_as_advanced( YAFSM_INCLUDE_DIRS )
 

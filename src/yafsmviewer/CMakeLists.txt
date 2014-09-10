@@ -27,7 +27,9 @@ install(TARGETS yafsmviewer DESTINATION "yafsm"
         BUNDLE DESTINATION "yafsm"
 )
 
-install( PROGRAMS yafsmview DESTINATION "bin" )
+if( UNIX )
+  install( PROGRAMS yafsmview DESTINATION "bin" )
+endif()
 #install(FILES ${QT_LIBRARIES} DESTINATION "yafsm")
 
 # directories to look for dependencies
