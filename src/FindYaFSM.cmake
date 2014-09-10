@@ -19,10 +19,11 @@ else()
   find_program(PERL_EXECUTABLE
            NAMES perl perl.exe )
 
-  if( YAFSM_SCRIPT STREQUAL "" )
+  if( YAFSM_SCRIPT STREQUAL "YAFSM_SCRIPT-NOTFOUND" )
     set( USE_YAFSM false )
+    set( YAFSM_INCLUDE_DIR )
   else()
-    if( NOT PERL_EXECUTABLE STREQUAL "" )
+    if( NOT PERL_EXECUTABLE STREQUAL "PERL_EXECUTABLE-NOTFOUND" )
       set( YAFSM_FOUND true )
       #message(STATUS "YaFSM.pl was found")
 
@@ -40,7 +41,7 @@ else()
   endif()
 endif()
 
-if(NOT "${YAFSM_SCRIPT}" STREQUAL "")
+if(NOT "${YAFSM_SCRIPT}" STREQUAL "YAFSM_SCRIPT-NOTFOUND")
   set( YAFSM_COMMAND "${PERL_EXECUTABLE} -I${YAFSM_INCLUDE_DIR} -f ${YAFSM_SCRIPT}")
 endif()
 
