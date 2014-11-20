@@ -240,6 +240,7 @@ sub outFSMHeader
   print $fh "#define TraceDbg1(x) std::cout << x << std::endl;\n";
   print $fh "#define TraceWarn(x) std::cout << x << std::endl;\n";
   print $fh "#define TraceError(x) std::cerr << x << std::endl;\n";
+  print $fh "#define TraceInit(x)\n";
   print $fh '#endif' ."\n";
   print $fh '#else' ."\n";
   print $fh '#ifndef TraceScope' ."\n";
@@ -247,6 +248,7 @@ sub outFSMHeader
   print $fh "#define TraceDbg1(x)\n";
   print $fh "#define TraceWarn(x)\n";
   print $fh "#define TraceError(x)\n";
+  print $fh "#define TraceInit(x)\n";
   print $fh '#endif' ."\n";
   print $fh '#endif' ."\n";
   print $fh '#endif' ."\n";
@@ -788,6 +790,7 @@ sub outFSMStateBaseHeader
   print $fh "#define TraceDbg1(x) std::cout << x << std::endl;\n";
   print $fh "#define TraceWarn(x) std::cout << x << std::endl;\n";
   print $fh "#define TraceError(x) std::cerr << x << std::endl;\n";
+  print $fh "#define TraceInit(x)\n";
   print $fh '#endif' ."\n";
   print $fh '#else' ."\n";
   print $fh '#ifndef TraceScope' ."\n";
@@ -795,6 +798,7 @@ sub outFSMStateBaseHeader
   print $fh "#define TraceDbg1(x)\n";
   print $fh "#define TraceWarn(x)\n";
   print $fh "#define TraceError(x)\n";
+  print $fh "#define TraceInit(x)\n";
   print $fh '#endif' ."\n";
   print $fh '#endif' ."\n";
   print $fh '#endif' ."\n";
