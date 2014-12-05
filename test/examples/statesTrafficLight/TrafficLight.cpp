@@ -3,7 +3,7 @@
 
 TrafficLight::TrafficLight()
 : ITrafficLightFSMActionHandler()
-, mTrafficLightFSM(self())
+, mTrafficLightFSM(this)
 {
 
   mTrafficLightWidget.resize(110, 300);
@@ -12,7 +12,8 @@ TrafficLight::TrafficLight()
   mTrafficLightFSM.run();
   mTrafficLightWidget.setFSM(&mTrafficLightFSM);
 
-};
+}
+
 TrafficLight::~TrafficLight()
 {
 }

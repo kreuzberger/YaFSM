@@ -258,6 +258,7 @@ sub outFSMHeader
 
   print $fh "#include <string>\n";
   print $fh "#include <map>\n";
+  print $fh "#include <assert.h>\n";
 
   print $fh "\n// forward declarations\n";
   print $fh "class " . $FSMName . "StateBase;\n";
@@ -278,8 +279,8 @@ sub outFSMHeader
 
   print $fh "\n";
   print $fh "public:\n";
-  print $fh "  " . $FSMName . "(I" . $FSMName . "ActionHandler& oActionHandler)\n";
-  print $fh "  : moActionHandler(oActionHandler)\n";
+  print $fh "  " . $FSMName . "(I" . $FSMName . "ActionHandler* poActionHandler)\n";
+  print $fh "  : mpoActionHandler(poActionHandler)\n";
   print $fh "  , mpoCurrentState( 0 )\n";
   print $fh "  , mbLockTrigger( false )\n";
   print $fh "  , mbInit( false )\n";
@@ -328,6 +329,7 @@ sub outFSMHeader
   print $fh "\n";
 
   print $fh "  void initFSM( void );\n";
+  print $fh "  void setActionHandler( I" . $FSMName . "ActionHandler* poActionHandler) { mpoActionHandler = poActionHandler; assert( 0 != poActionHandler ); }\n";
   print $fh "  virtual void setTimerID( int iTimerId, int iTimeOutMs, int iRepeatCnt );\n";
   print $fh "  virtual void sendEventID( int iEventId );\n";
 
@@ -377,7 +379,7 @@ sub outFSMHeader
   print $fh "  virtual void processTimerEventID( int iTimerId );\n";
   print $fh "  virtual void processEventID( int iEventId );\n";
 
-  print $fh "  I" . $FSMName . "ActionHandler& getActionHandler() {return moActionHandler;}\n";
+  print $fh "  I" . $FSMName . "ActionHandler& getActionHandler() {assert( 0 != mpoActionHandler ); return *mpoActionHandler;}\n";
   print $fh "\n";
   print $fh "//todo make this private and allow test makros to access this\n";
 
@@ -435,7 +437,7 @@ sub outFSMHeader
   print $fh "  bool isInitialised( void );\n";
   print $fh "  void registerEventID( int );\n";
 
-  print $fh "  I" . $FSMName . "ActionHandler& moActionHandler;\n";
+  print $fh "  I" . $FSMName . "ActionHandler* mpoActionHandler;\n";
   print $fh "\n";
   print $fh "  " . $FSMName . "StateBase* mpoCurrentState;\n";
   print $fh "\n";
@@ -515,6 +517,7 @@ sub outFSMHeader
   print $fh "inline void " . $FSMName . "::initFSM( void )\n";
   print $fh "{\n";
   print $fh "  mbInit = true;\n";
+  print $fh "  assert( 0 != mpoActionHandler );\n";
   print $fh "  enterCurrentState();\n";
   print $fh "}\n\n";
   print $fh "\n";

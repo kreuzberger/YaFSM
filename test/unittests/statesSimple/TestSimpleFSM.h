@@ -11,7 +11,7 @@ class QTestSimpleFSM: public QObject, public ISimpleFSMActionHandler
   Q_OBJECT
   public:
   QTestSimpleFSM()
-  : mSimpleFSM(self())
+  : mSimpleFSM(this)
   {
     mSimpleFSM.initFSM();
   };

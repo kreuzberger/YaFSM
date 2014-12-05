@@ -9,7 +9,7 @@ class TestEventFSM: public IEventFSMActionHandler
   
 public:
   TestEventFSM()
-  : mEventFSM(self())
+  : mEventFSM(this)
   {
     mEventFSM.initFSM();
   }

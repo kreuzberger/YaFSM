@@ -34,10 +34,11 @@ inline Pump& self() {return *this;}
 
 Pump::Pump()
 : IPumpFSMActionHandler()
-, mPumpFSM(self())
+, mPumpFSM(this)
 {
   mPumpFSM.initFSM();
-};
+}
+
 Pump::~Pump()
 {
 }

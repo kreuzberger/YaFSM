@@ -10,7 +10,7 @@ class QTestFullFSM: public QObject, public IFullFSMActionHandler
   public:
   QTestFullFSM()
   : IFullFSMActionHandler()
-  , mFullFSM(self())
+  , mFullFSM(this)
   {
     mFullFSM.initFSM();
   }

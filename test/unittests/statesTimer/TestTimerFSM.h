@@ -10,10 +10,10 @@ class TestTimerFSM: public QObject, public ITimerFSMActionHandler
 public:
   TestTimerFSM()
   : ITimerFSMActionHandler()
-  , mTimerFSM(self())
+  , mTimerFSM(this)
   {
     mTimerFSM.initFSM();
-  };
+  }
   
   virtual ~TestTimerFSM()
   {

@@ -11,10 +11,10 @@ class TestTriggerFSM: public QObject, public ITriggerFSMActionHandler
   Q_OBJECT
 public:
   TestTriggerFSM()
-  : mTriggerFSM(self())
+  : mTriggerFSM(this)
   {
     mTriggerFSM.initFSM();
-  };
+  }
 private slots:
   void initTestCase() {}
   void testInitFSM();

@@ -24,7 +24,7 @@ class QTestActionFSM: public QObject,public IActionFSMActionHandler
      Q_OBJECT  
 public:
   QTestActionFSM()
-  : mActionFSM(self())
+  : mActionFSM(this)
   {
     mActionFSM.initFSM();
   };
