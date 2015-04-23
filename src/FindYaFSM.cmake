@@ -3,7 +3,6 @@
 #  USE_YAFSM               - have the yafsmgen command found
 
 
-
 if( NOT "${YAFSM_SCRIPT}" STREQUAL "" AND NOT "${YAFSM_SCRIPT}" STREQUAL "YAFSM_SCRIPT-NOTFOUND")
   set( YAFSM_FOUND true )
 else()
@@ -14,9 +13,10 @@ else()
               PATHS  $ENV{PATH} /usr/local/yafsm
               DOC "Perl script YaFsm.pl" )
   else()
+    set(ENVPROGRAMFILES32 "PROGRAMFILES(X86)")
     find_file(YAFSM_SCRIPT
               NAMES YaFsm.pl
-              PATHS  $ENV{PATH} "$ENV{PROGRAMFILES}/YaFsm/yafsm" "$ENV{PROGRAMFILES(x86}/YaFsm/yafsm"
+              PATHS  $ENV{PATH} "$ENV{PROGRAMFILES}/YaFsm/yafsm" "$ENV{${ENVPROGRAMFILES32}}/YaFsm/yafsm"
               DOC "Perl script YaFsm.pl" )
   endif()
 
