@@ -1,4 +1,4 @@
-package YaFsmParser;
+package YaFsmScxmlParser;
 
 use strict;
 use warnings;
@@ -6,15 +6,10 @@ use Cwd;
 use File::Path;
 use File::Basename;
 use File::Copy;
-use YaFsmViewerGen;
 use YaFsmCodeGen;
 use FindBin;
 
-#use vars qw($VERSION @ISA @EXPORT);
-#require Exporter;
-#@ISA = qw(Exporter);
-#@EXPORT = qw(createProdDirs $isWin $SrcProdDirDebug);
-#$VERSION = 1.0;
+
 
 
 BEGIN {
@@ -39,10 +34,7 @@ our $MINOR_VERSION = 0;
 our @EXPORT_OK;
 
 our $gFSMFileName;
-our $gFSMGenView=0;
-our $gFSMGenDotType='svg';
 our $gFSMGenCode=0;
-our $gFSMViewOutPath;
 our $gFSMCodeOutPath;
 our %gFSMActions;
 our %gFSMTriggers;
@@ -72,27 +64,9 @@ sub init
 {
   my $fsmname = shift;
   my $fsmbasename=basename($fsmname,'.xml');
-  if((!defined $gFSMViewOutPath) && (!defined $gFSMCodeOutPath))
+  if((!defined $gFSMCodeOutPath))
   {
-    $gFSMViewOutPath= cwd() . '/' .lc($fsmbasename).'/view';
     $gFSMCodeOutPath= cwd() . '/' .lc($fsmbasename).'/code';
-  }
-
-  if($gFSMGenView && (defined $gFSMViewOutPath))
-  {
-    mkpath( $gFSMViewOutPath, {verbose => 1, mode => 0755}) if (!(-d $gFSMViewOutPath));
-    my $imageOutPath = $gFSMViewOutPath . '/images';
-
-    mkpath( $imageOutPath, {verbose => 1, mode => 0755}) if (!(-d $imageOutPath));
-
-    my $imageInPath = $FindBin::Bin .'/images';
-    foreach my $img (@gDotImages)
-    {
-      if(!copy("$imageInPath/$img", "$imageOutPath/$img"))
-      {
-        YaFsm::printFatal("$imageInPath/$img -> $imageOutPath/$img: $!");
-      }
-    }
   }
 
   if($gFSMGenCode && (defined $gFSMCodeOutPath))
@@ -139,59 +113,45 @@ sub readFSM
     # create object
     my $xml = new XML::Simple (KeyAttr=>[]);
 
-    # read XML file
-    my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => [qw(state transition action trigger timer event member include)])};
-    if ($@)
+    if( $filename =~ m/.*\.scxml/)
     {
-      # parse error messages look like this:
-      # not well-formed at line 10, column 8, byte 382 at d:/bin/perl/site/lib/XML/Parser.pm line 183
-      $@ =~ /(.*) at .*? line \d+\.?\s*$/;
-      my $errmsg = $@;
-      YaFsm::printWarn("Parse error: $errmsg");
-      YaFsm::printFatal("exiting script due to parse error");
-    }
-    else
-    {
-      $gFSMFileName = $filename;
-      $gFSMName = basename($gFSMFileName,'.xml');
 
-      $gFSM = $xmlContent;
-
-      print Dumper($gFSM) if $YaFsm::gVerbose;
-      YaFsm::printDbg("parsing Definitons (actions, timers, events) ");
-      parseDefinitions($gFSM->{definitions});# if $YaFsm::gVerbose;
-      YaFsm::printDbg("parsing FSM");
-      if ($gFSMGenView)
+      # read XML file
+      # force array is useful for configurations that have only one entry and are not parsed into
+      # array by default. So we ensure that the buildcfg always is an array!
+      #  my $xmlContent = eval{$xml->XMLin("$filename", SuppressEmpty => '',ForceArray => qr/buildcfg$/)};
+      my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => [qw(state transition final)])};
+      #my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => qr/state$/ )};
+      if ($@)
       {
-        # clean dot wallpaper filename
-        my $outWallpaperFilePath = $gFSMViewOutPath . '/wallpaper.dot';
-        open(FH,">$outWallpaperFilePath") || die "cannot open $outWallpaperFilePath for cleaning\n";
-        print FH "digraph G {\n";
-        print FH " compound=true;\n";
-        close(FH);
+        # parse error messages look like this:
+        # not well-formed at line 10, column 8, byte 382 at d:/bin/perl/site/lib/XML/Parser.pm line 183
+        $@ =~ /(.*) at .*? line \d+\.?\s*$/;
+        my $errmsg = $@;
+        YaFsm::printWarn("Parse error: $errmsg");
+        YaFsm::printFatal("exiting script due to parse error");
       }
-
-      parseFSM($gFSM->{fsm},"root");# if $YaFsm::gVerbose;
-
-      YaFsm::printFatal("mismatch in state levels $gStateLevel") if $gStateLevel != -1;
-
-      # after parsing, write out description file for OpemFSMViewer
-      YaFsmViewerGen::writeDscFile()  if( $gFSMGenView);
-      # write out code files
-      YaFsmCodeGen::writeCodeFiles($gFSMName)  if( $gFSMGenCode);
-
-      if ($gFSMGenView)
+      else
       {
-        # clean dot wallpaper filename
-        my $outWallpaperFilePath = $gFSMViewOutPath . '/wallpaper.dot';
-        open(FH,">>$outWallpaperFilePath") || die "cannot open $outWallpaperFilePath for writing\n";
-        print FH "}\n";
-        close(FH);
-        # write out wallpaper svg file
-        YaFsmViewerGen::genDotTypeFile('wallpaper')  if( $gFSMGenView);
+        $gFSMFileName = $filename;
+        $gFSMName = basename($gFSMFileName,'.xml');
+
+        $gFSM = $xmlContent;
+
+        print Dumper($gFSM) if $YaFsm::gVerbose;
+        YaFsm::printDbg("parsing Definitons (actions, timers, events) ");
+        #parseDefinitions($gFSM->{definitions});# if $YaFsm::gVerbose;
+        YaFsm::printDbg("parsing FSM");
+
+
+        parseFSM($gFSM,"root");# if $YaFsm::gVerbose;
+
+        YaFsm::printFatal("mismatch in state levels $gStateLevel") if $gStateLevel != -1;
+
+        # write out code files
+        YaFsmCodeGen::writeCodeFiles($gFSMName, 1)  if( $gFSMGenCode);
       }
     }
-
 
     if(!defined $gFSMFileName)
     {
@@ -210,7 +170,13 @@ sub hasSubStates
   my $state = shift;
   if($state->{state})
   {
-   	YaFsm::printDbg("Found substates in state $state->{name}");
+    YaFsm::printDbg("Found substates in state $state->{name}") if ($state->{name});
+    YaFsm::printDbg("Found substates in state $state->{id}") if ($state->{id});
+    $hasSubStates = 1;
+  }
+  elsif($state->{final})
+  {
+    YaFsm::printDbg("Found final substate in state $state->{id}");
     $hasSubStates = 1;
   }
 
@@ -408,11 +374,67 @@ sub parseFSM
     }
   }
 
+  $gStateLevel--;
 
-  YaFsmViewerGen::genDotFile($parentName,$currRef, $parentParentName) if ($gFSMGenView);
-  YaFsmViewerGen::genDotTypeFile($parentName) if ($gFSMGenView);
-  YaFsmViewerGen::genDscFile($parentName,$currRef, $gStateLevel) if ($gFSMGenView);
-  #YaFsmCodeGen::genCodeFiles($parentName,$currRef,$parentParentName) if( $gFSMGenCode);
+}
+
+sub parseScxmlFSM
+{
+  my $currRef = shift;
+  my $parentName = shift;
+  my $parentParentName=shift;
+  $gStateLevel++;
+
+
+  foreach my $state (@{$currRef->{state}})
+  {
+    YaFsm::printDbg("states on substate of $parentName: $state->{id}");
+    YaFsm::printDbg("$parentName state level $gStateLevel");
+
+    push(@gFSMStates, $state->{id});
+
+    if(hasSubStates($state))
+    {
+      parseScxmlFSM($state, $state->{id}, $parentName);
+    }
+
+    foreach my $trans (@{$currRef->{transition}})
+    {
+      if($trans->{event})
+      {
+        YaFsm::printDbg("transition on state  $state->{id}: startstate $state->{id}, endstate $trans->{target}, trigger $trans->{event}");
+      }
+      else
+      {
+        YaFsm::printDbg("transition on state $state->{id}: trigger <empty>");
+      }
+    }
+  }
+
+  foreach my $state (@{$currRef->{final}})
+  {
+    YaFsm::printDbg("states on substate of $parentName: $state->{id}");
+    YaFsm::printDbg("$parentName state level $gStateLevel");
+
+    push(@gFSMStates, $state->{id});
+
+    if(hasSubStates($state))
+    {
+      parseScxmlFSM($state, $state->{id}, $parentName);
+    }
+
+    foreach my $trans (@{$currRef->{transition}})
+    {
+      if($trans->{event})
+      {
+        YaFsm::printDbg("transition on state  $state->{id}: startstate $state->{id}, endstate $trans->{target}, trigger $trans->{event}");
+      }
+      else
+      {
+        YaFsm::printDbg("transition on state  $state->{id}: trigger <empty>");
+      }
+    }
+  }
 
 
   $gStateLevel--;

@@ -9,17 +9,25 @@ use Pod::Usage;
 
 use YaFsm;
 use YaFsmParser;
+use YaFsmScxmlParser;
+
+my $gFSMFileName;
+my $gFSMGenView = 0;
+my $gFSMGenDotType='svg';
+my $gFSMViewOutPath;
+my $gFSMGenCode = 0;
+my $gFSMCodeOutPath;
 
 my $optOk = GetOptions (
 #            'rootpath=s' => \$ProBuild::RootPath,
  #           'debug' => sub{$ProBuild::currBuildCfg = 'debug'},
  #           'genmake!' => \$ProBuild::gCurrCfgRef->{'genmake'},
-            'fsm=s' => \$YaFsmParser::gFSMFileName,
-            'genview' => \$YaFsmParser::gFSMGenView,
-            'dottype=s' => \$YaFsmParser::gFSMGenDotType,
-            'outview=s' => \$YaFsmParser::gFSMViewOutPath,
-            'gencode' => \$YaFsmParser::gFSMGenCode,
-            'outcode=s' => \$YaFsmParser::gFSMCodeOutPath,
+            'fsm=s' => \$gFSMFileName,
+            'genview' => \$gFSMGenView,
+            'dottype=s' => \$gFSMGenDotType,
+            'outview=s' => \$gFSMViewOutPath,
+            'gencode' => \$gFSMGenCode,
+            'outcode=s' => \$gFSMCodeOutPath,
             'verbose' => \$YaFsm::gVerbose,
             'help' => sub{pod2usage(-verbose => 0);CORE::exit;},
             'man' => sub{pod2usage(-verbose => 1);CORE::exit;}
@@ -38,14 +46,32 @@ if($optOk)
     }
   }
 
-  if(!defined $YaFsmParser::gFSMFileName)
+  if(!defined $gFSMFileName)
   {
     YaFsm::printFatal("Missing definition of fsm file name, please use option --fsm");
   }
   else
   {
-    YaFsmParser::init($YaFsmParser::gFSMFileName);
-    YaFsmParser::readFSM($YaFsmParser::gFSMFileName);
+    if( $gFSMFileName =~ m/.*\.xml$/ )
+    {
+      $YaFsmParser::gFSMFileName = $gFSMFileName;
+      $YaFsmParser::gFSMGenView = $gFSMGenView;
+      $YaFsmParser::gFSMGenDotType = $gFSMGenDotType;
+      $YaFsmParser::gFSMViewOutPath = $gFSMViewOutPath;
+      $YaFsmParser::gFSMGenCode = $gFSMGenCode;
+      $YaFsmParser::gFSMCodeOutPath = $gFSMCodeOutPath;
+
+      YaFsmParser::init($YaFsmParser::gFSMFileName);
+      YaFsmParser::readFSM($YaFsmParser::gFSMFileName);
+    }
+    else
+    {
+      $YaFsmScxmlParser::gFSMFileName = $gFSMFileName;
+      $YaFsmScxmlParser::gFSMGenCode = $gFSMGenCode;
+      $YaFsmScxmlParser::gFSMCodeOutPath = $gFSMCodeOutPath;
+      YaFsmScxmlParser::init($gFSMFileName);
+      YaFsmScxmlParser::readFSM($gFSMFileName);
+    }
   }
 
 }

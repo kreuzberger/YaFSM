@@ -8,6 +8,7 @@ use File::Path;
 #use File::Find;
 use File::Basename;
 use YaFsmCodeGenCppOO;
+use YaFsmScxmlCodeGenCppOO;
 #use File::Copy;
 #use FindBin;
 #use XML::Parser;
@@ -49,7 +50,15 @@ our @EXPORT_OK;
 sub writeCodeFiles
 {
   my $FSMName = shift;
-  YaFsmCodeGenCppOO::writeCodeFiles($FSMName);
+  my $generateScxml = shift;
+  if( $generateScxml)
+  {
+    YaFsmScxmlCodeGenCppOO::writeCodeFiles($FSMName);
+  }
+  else
+  {
+    YaFsmCodeGenCppOO::writeCodeFiles($FSMName);
+  }
 }
 
 
