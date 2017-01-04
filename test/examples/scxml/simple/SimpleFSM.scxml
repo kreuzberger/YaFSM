@@ -2,10 +2,10 @@
               version="1.0"
               initial="hello">
 
-     <final id="hello">
+     <state id="hello">
       <onentry>
        <log expr="'hello world'" />
       </onentry>
-     </final>
+     </state>
 
     </scxml>

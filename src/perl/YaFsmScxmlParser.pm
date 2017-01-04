@@ -63,7 +63,7 @@ $slash = "\\" if $isWin;
 sub init
 {
   my $fsmname = shift;
-  my $fsmbasename=basename($fsmname,'.xml');
+  my $fsmbasename=basename($fsmname,'.scxml');
   if((!defined $gFSMCodeOutPath))
   {
     $gFSMCodeOutPath= cwd() . '/' .lc($fsmbasename).'/code';
@@ -134,7 +134,7 @@ sub readFSM
       else
       {
         $gFSMFileName = $filename;
-        $gFSMName = basename($gFSMFileName,'.xml');
+        $gFSMName = basename($gFSMFileName,'.scxml');
 
         $gFSM = $xmlContent;
 
@@ -170,8 +170,7 @@ sub hasSubStates
   my $state = shift;
   if($state->{state})
   {
-    YaFsm::printDbg("Found substates in state $state->{name}") if ($state->{name});
-    YaFsm::printDbg("Found substates in state $state->{id}") if ($state->{id});
+     YaFsm::printDbg("Found substates in state $state->{id}") if ($state->{id});
     $hasSubStates = 1;
   }
   elsif($state->{final})
@@ -351,28 +350,32 @@ sub parseFSM
   {
     #my $cnt = keys(%{$cfg});
    	#YaFsm::printDbg("$cnt");
-    YaFsm::printDbg("states on substate of $parentName: $state->{name}");
+    YaFsm::printDbg("states on substate of $parentName: $state->{id}");
     YaFsm::printDbg("$parentName state level $gStateLevel");
 
-    push(@gFSMStates, $state->{name});
+    push(@gFSMStates, $state->{id});
 
     if(hasSubStates($state))
     {
-      parseFSM($state, $state->{name}, $parentName);
+      parseFSM($state, $state->{id}, $parentName);
     }
+
+    foreach my $trans (@{$currRef->{transition}})
+    {
+      if($trans->{trigger})
+      {
+        YaFsm::printDbg("transition on state $parentName: startstate $state->{id}, endstate $trans->{target}, trigger $trans->{event}");
+
+      }
+      else
+      {
+        YaFsm::printDbg("transition on state $parentName: trigger <empty>");
+      }
+      $trans->{source} = $state->{id};
+    }
+
   }
 
-  foreach my $trans (@{$currRef->{transition}})
-  {
-    if($trans->{trigger})
-    {
-      YaFsm::printDbg("transition on state $parentName: startstate $trans->{begin}, endstate $trans->{end}, trigger $trans->{trigger}");
-    }
-    else
-    {
-      YaFsm::printDbg("transition on state $parentName: trigger <empty>");
-    }
-  }
 
   $gStateLevel--;
 

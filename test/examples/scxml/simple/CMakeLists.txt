@@ -7,6 +7,6 @@ INCLUDE_DIRECTORIES( ${QT_INCLUDE_DIR} )
 
 FSM_GENERATE(GENERATED_FSM_SRC SimpleFSM.scxml)
 
-add_executable(simple ${GENERATED_FSM_SRC} ${GENERATED_FSM_SRC_MOC_HEADERS})
-#target_link_libraries(simple ${QT_LIBRARIES})
+add_executable(simple main.cpp ${GENERATED_FSM_SRC} ${GENERATED_FSM_SRC_MOC_HEADERS})
+target_link_libraries(simple ${QT_LIBRARIES})
 

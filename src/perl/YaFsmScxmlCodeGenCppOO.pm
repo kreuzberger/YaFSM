@@ -940,7 +940,7 @@ sub outFSMStates
   print $fhS "namespace N". $FSMName . "\n";
   print $fhS "{\n";
 
-  parseFSM($fhH,$fhS,$YaFsmScxmlParser::gFSM->{fsm},"","",\@{$genTransitions});
+  parseFSM($fhH,$fhS,$YaFsmScxmlParser::gFSM,"","",\@{$genTransitions});
 
   print $fhH "}\n";
   print $fhS "}\n";
@@ -971,7 +971,7 @@ sub parseFSM
     if(YaFsmScxmlParser::hasSubStates($state))
     {
       genStateImpl($fhH, $fhS, $state,$currRef,$parentName);
-      parseFSM($fhH, $fhS, $state, $state->{name}, $parentName,\@{$genTransitions});
+      parseFSM($fhH, $fhS, $state, $state->{id}, $parentName,\@{$genTransitions});
     }
     else
     {
@@ -994,41 +994,41 @@ sub genStateImpl
   my $currRef = shift;
   my $parentName =shift;
 
-  YaFsm::printDbg("codegen: state $state->{name}");
+  YaFsm::printDbg("codegen: state $state->{id}");
   YaFsm::printDbg("codegen: parent $parentName") if defined $parentName;
 
   if(defined $parentName && length($parentName))
   {
-    print $fhH "class State".$state->{name}.": public State" . $parentName ."\n";
+    print $fhH "class State".$state->{id}.": public State" . $parentName ."\n";
   }
   else
   {
-    print $fhH "class State".$state->{name}.": public " . $YaFsmScxmlParser::gFSMName . "StateBase\n";
+    print $fhH "class State".$state->{id}.": public " . $YaFsmScxmlParser::gFSMName . "StateBase\n";
   }
   print $fhH "{\n";
   print $fhH "public:\n";
-  print $fhH "  State" . $state->{name} . "();\n";
-  print $fhH "  virtual ~State" . $state->{name} . "();\n";
+  print $fhH "  State" . $state->{id} . "();\n";
+  print $fhH "  virtual ~State" . $state->{id} . "();\n";
   # declare all triggers handled by this state
   print $fhH "protected:\n";
   my %processedTriggers;
   foreach my $trans (@{$currRef->{transition}})
   {
-  # print $fh "  $trans->{begin} -> $trans->{end} ";
-    if($trans->{trigger} && !(exists($processedTriggers{$trans->{trigger}})))
+  # print $fh "  $trans->{source} -> $trans->{end} ";
+    if($trans->{event} && !(exists($processedTriggers{$trans->{event}})))
     {
-      if( $trans->{begin} eq $state->{name} )
+      if( $trans->{source} eq $state->{id} )
       {
-        my $params = $YaFsmScxmlParser::gFSMTriggers{$trans->{trigger}};
+        my $params = $YaFsmScxmlParser::gFSMTriggers{$trans->{event}};
         if((defined $params) && ("" ne $params))
         {
-          print $fhH "  virtual void $trans->{trigger}( ". $YaFsmScxmlParser::gFSMName . "&, $params );\n";
+          print $fhH "  virtual void $trans->{event}( ". $YaFsmScxmlParser::gFSMName . "&, $params );\n";
         }
         else
         {
-          print $fhH "  virtual void $trans->{trigger}( ". $YaFsmScxmlParser::gFSMName . "& );\n";
+          print $fhH "  virtual void $trans->{event}( ". $YaFsmScxmlParser::gFSMName . "& );\n";
         }
-        $processedTriggers{$trans->{trigger}}=$params;
+        $processedTriggers{$trans->{event}}=$params;
       }
     }
   }
@@ -1038,12 +1038,12 @@ sub genStateImpl
   # close state header class
   print $fhH "};\n\n";
 
-  print $fhS "State".$state->{name}."::State".$state->{name}."()\n";
+  print $fhS "State".$state->{id}."::State".$state->{id}."()\n";
   print $fhS "{\n";
-  print $fhS "  setStateName( \"State". $state->{name} ."\" );\n";
+  print $fhS "  setStateName( \"State". $state->{id} ."\" );\n";
   print $fhS "}\n\n";
 
-  print $fhS "State".$state->{name}."::~State".$state->{name}."()\n";
+  print $fhS "State".$state->{id}."::~State".$state->{id}."()\n";
   print $fhS "{\n";
   print $fhS "}\n\n";
 
@@ -1052,11 +1052,11 @@ sub genStateImpl
     my $enterStateName = YaFsmScxmlParser::getEnterStateName($state);
     if(( YaFsmScxmlParser::hasStateEnterActions($state) ) || (defined $enterStateName) )
     {
-      print $fhS "void State".$state->{name}."::enter( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl )\n";
+      print $fhS "void State".$state->{id}."::enter( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl )\n";
     }
     else
     {
-      print $fhS "void State".$state->{name}."::enter( " . $YaFsmScxmlParser::gFSMName . "& /*fsmImpl*/ )\n";
+      print $fhS "void State".$state->{id}."::enter( " . $YaFsmScxmlParser::gFSMName . "& /*fsmImpl*/ )\n";
     }
     print $fhS "{\n";
 
@@ -1111,7 +1111,7 @@ sub genStateImpl
 
     if(YaFsmScxmlParser::hasStateExitActions($state))
     {
-      print $fhS "void State".$state->{name}."::exit( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl )\n";
+      print $fhS "void State".$state->{id}."::exit( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl )\n";
       print $fhS "{\n";
 
       if(defined $state->{tstopexit})
@@ -1153,7 +1153,7 @@ sub genStateImpl
     }
     else
     {
-      print $fhS "void State".$state->{name}."::exit( " . $YaFsmScxmlParser::gFSMName . "& /*fsmImpl*/ )\n";
+      print $fhS "void State".$state->{id}."::exit( " . $YaFsmScxmlParser::gFSMName . "& /*fsmImpl*/ )\n";
       print $fhS "{\n";
 
     }
@@ -1180,20 +1180,20 @@ sub genStateTransImpl
   # generate all transitions for the states
   foreach my $trans (@transArray)
   {
-    my $criteria = $trans->{begin} . '_' . $trans->{trigger};
+    my $criteria = $trans->{source} . '_' . $trans->{event};
     # add methods for each trigger.
     # be carefull that a trigger is not implemented twice, depending on conditions
     # so consider trigger name and begin of a trigger as condition if already implemented
 
-    if($trans->{trigger} && !(exists($processedTriggers{$criteria})))
+    if($trans->{event} && !(exists($processedTriggers{$criteria})))
     {
-      my $params = $YaFsmScxmlParser::gFSMTriggers{$trans->{trigger}};
+      my $params = $YaFsmScxmlParser::gFSMTriggers{$trans->{event}};
       $processedTriggers{$criteria} = $params;
       my $transCoverageName;
       if((defined $params) && ("" ne $params) )
       {
-        $transCoverageName = $trans->{begin} .'_' . $trans->{trigger};
-        print $fhS "void State$trans->{begin}::$trans->{trigger}( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl, $params)\n";
+        $transCoverageName = $trans->{source} .'_' . $trans->{event};
+        print $fhS "void State$trans->{source}::$trans->{event}( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl, $params)\n";
         print $fhS "{\n";
         my @paraArray= getParamsArray($params);
         foreach(@paraArray)
@@ -1205,8 +1205,8 @@ sub genStateTransImpl
       }
       else
       {
-        $transCoverageName = $trans->{begin} .'_' . $trans->{trigger};
-        print $fhS "void State$trans->{begin}::$trans->{trigger}( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl)\n";
+        $transCoverageName = $trans->{source} .'_' . $trans->{event};
+        print $fhS "void State$trans->{source}::$trans->{event}( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl)\n";
         print $fhS "{\n";
       }
 
@@ -1216,9 +1216,9 @@ sub genStateTransImpl
 
       for(my $nextIdx=$idx; $nextIdx < @transArray; $nextIdx++)
       {
-        if($transArray[$nextIdx]->{trigger} eq $trans->{trigger})
+        if($transArray[$nextIdx]->{event} eq $trans->{event})
         {
-          if($transArray[$nextIdx]->{begin} eq $trans->{begin})
+          if($transArray[$nextIdx]->{source} eq $trans->{source})
           {
             if($transArray[$nextIdx]->{condition})
             {
@@ -1228,9 +1228,9 @@ sub genStateTransImpl
             print $fhS "    fsmImpl.setTransByName(\"$transCoverageName\");\n";
             # current could be difficult to determine. if we made a fallthrough into next hierarchy level
             # exit state by name
-            if( $transArray[$nextIdx]->{begin} ne $transArray[$nextIdx]->{end} )
+            if( $transArray[$nextIdx]->{source} ne $transArray[$nextIdx]->{target} )
             {
-              print $fhS "    fsmImpl.exitState(\"" . $transArray[$nextIdx]->{begin} ."\");\n" ;
+              print $fhS "    fsmImpl.exitState(\"" . $transArray[$nextIdx]->{source} ."\");\n" ;
             }
 
             if(YaFsmScxmlParser::hasTransitionActions($transArray[$nextIdx]))
@@ -1254,9 +1254,9 @@ sub genStateTransImpl
               #  print $fh "<TR><TD>^$trans->{event}</TD></TR>;\n";
             }
 
-            if( $transArray[$nextIdx]->{begin} ne $transArray[$nextIdx]->{end} )
+            if( $transArray[$nextIdx]->{source} ne $transArray[$nextIdx]->{target} )
             {
-              print $fhS '    fsmImpl.setStateByName("' . $transArray[$nextIdx]->{end} . "\");\n";
+              print $fhS '    fsmImpl.setStateByName("' . $transArray[$nextIdx]->{target} . "\");\n";
               print $fhS "    fsmImpl.enterCurrentState();\n";
             }
 
@@ -1268,7 +1268,7 @@ sub genStateTransImpl
 
               if((defined $params) && ("" ne $params) )
               {
-                print $fhS "    State$parentName" . "::$trans->{trigger}( fsmImpl";
+                print $fhS "    State$parentName" . "::$trans->{event}( fsmImpl";
                 my @paraArray= getParamsArray($params);
                 foreach(@paraArray)
                 {
@@ -1279,7 +1279,7 @@ sub genStateTransImpl
               }
               else
               {
-                print $fhS "    State$parentName" . "::$trans->{trigger}( fsmImpl );\n";
+                print $fhS "    State$parentName" . "::$trans->{event}( fsmImpl );\n";
               }
             }
 
