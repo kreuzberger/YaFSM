@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" binding="early" xmlns:qt="http://www.qt.io/2015/02/scxml-ext" name="SimpleScxmlFSM" qt:editorversion="4.2.0" initial="stop">
+  <state id="stop">
+    <transition event="run" target="run" cond="">
+    <script>
+      onRun();
+    </script>
+    </transition>
+  </state>
+  <state id="run">
+    <initial>
+      <transition target="running"/>
+    </initial>
+    <state id="running">
+      <onentry>
+        <script>
+          onEnterRun();
+        </script>
+      </onentry>
+      <onexit>
+        <script>
+          onExitRun();
+        </script>
+      </onexit>
+    </state>
+    <transition event="end" target="stop"/>
+  </state>
+</scxml>

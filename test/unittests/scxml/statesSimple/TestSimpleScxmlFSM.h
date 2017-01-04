@@ -14,7 +14,7 @@ class QTestSimpleScxmlFSM: public QObject, public ISimpleScxmlFSMActionHandler
   : mSimpleScxmlFSM(this)
   {
     mSimpleScxmlFSM.initFSM();
-  };
+  }
 
   private slots:
     void initTestCase() {}

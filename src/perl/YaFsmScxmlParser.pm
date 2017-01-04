@@ -120,7 +120,7 @@ sub readFSM
       # force array is useful for configurations that have only one entry and are not parsed into
       # array by default. So we ensure that the buildcfg always is an array!
       #  my $xmlContent = eval{$xml->XMLin("$filename", SuppressEmpty => '',ForceArray => qr/buildcfg$/)};
-      my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => [qw(state transition final)])};
+      my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => [qw(state transition final data)])};
       #my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => qr/state$/ )};
       if ($@)
       {
@@ -139,8 +139,8 @@ sub readFSM
         $gFSM = $xmlContent;
 
         print Dumper($gFSM) if $YaFsm::gVerbose;
-        YaFsm::printDbg("parsing Definitons (actions, timers, events) ");
-        #parseDefinitions($gFSM->{definitions});# if $YaFsm::gVerbose;
+        YaFsm::printDbg("parsing Definitons (datamodel) ");
+        parseDefinitions($gFSM);# if $YaFsm::gVerbose;
         YaFsm::printDbg("parsing FSM");
 
 
@@ -253,17 +253,11 @@ sub hasStateActions
 {
   my $hasStateActions = 0;
   my $state = shift;
-  if(defined $state->{enter}
-     || defined $state->{exit}
-     || defined $state->{tstartenter}
-     || defined $state->{tstopenter}
-     || defined $state->{tstartexit}
-     || defined $state->{tstopexit}
-     || defined $state->{evententer}
-     || defined $state->{eventexit}
+  if(defined $state->{onentry}
+     || defined $state->{onexit}
     )
   {
-   	YaFsm::printDbg("Found state enter/exit/timer actions in state $state->{name}");
+    YaFsm::printDbg("Found state enter/exit/ actions in state $state->{id}");
     $hasStateActions = 1;
   }
 
@@ -275,10 +269,7 @@ sub hasStateEnterActions
 {
   my $hasStateActions = 0;
   my $state = shift;
-  if(defined $state->{enter}
-     || defined $state->{tstartenter}
-     || defined $state->{tstopenter}
-     || defined $state->{evententer}
+  if(defined $state->{onentry}
     )
   {
     $hasStateActions = 1;
@@ -292,10 +283,7 @@ sub hasStateExitActions
 {
   my $hasStateActions = 0;
   my $state = shift;
-  if(defined $state->{exit}
-     || defined $state->{tstartexit}
-     || defined $state->{tstopexit}
-     || defined $state->{eventexit}
+  if(defined $state->{onexit}
     )
   {
     $hasStateActions = 1;
@@ -314,7 +302,9 @@ sub hasTransitionActions
 {
   my $hasTransActions = 0;
   my $trans = shift;
-  if(defined $trans->{action})
+  if(defined $trans->{script}
+     || defined $trans->{assign}
+  )
   {
    	YaFsm::printDbg("Found transition actions in trigger $trans->{trigger}");
     $hasTransActions = 1;
@@ -445,9 +435,16 @@ sub parseScxmlFSM
 }
 
 
+
 sub parseDefinitions
 {
   my $currRef = shift;
+
+  foreach my $data (@{$currRef->{datamodel}})
+  {
+    YaFsm::printDbg("found data element");
+  }
+
 
   foreach my $action (@{$currRef->{action}})
   {

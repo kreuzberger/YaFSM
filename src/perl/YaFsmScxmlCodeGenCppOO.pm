@@ -1080,9 +1080,9 @@ sub genStateImpl
         }
       }
 
-      if(defined $state->{enter})
+      if(defined $state->{onentry}{script})
       {
-        my @str = split(/;/,$state->{enter});
+        my @str = split(/;/,$state->{onentry}{script});
         foreach(@str)
         {
           print $fhS "  fsmImpl.getActionHandler()." . $_ .";\n";
@@ -1132,9 +1132,9 @@ sub genStateImpl
         }
       }
 
-      if(defined $state->{exit})
+      if(defined $state->{onexit}{script})
       {
-        my @str = split(/;/,$state->{exit});
+        my @str = split(/;/,$state->{onexit}{script});
         foreach(@str)
         {
           print $fhS "  fsmImpl.getActionHandler()." . $_ . ";\n";
@@ -1175,7 +1175,8 @@ sub genStateTransImpl
 
   my %processedTriggers;
   my $idx = 0;
-  my @transArray = @{$currRef->{transition}} if $currRef->{transition};
+  my @transArray;
+  @transArray = @{$currRef->{transition}} if $currRef->{transition};
 
   # generate all transitions for the states
   foreach my $trans (@transArray)
@@ -1220,9 +1221,9 @@ sub genStateTransImpl
         {
           if($transArray[$nextIdx]->{source} eq $trans->{source})
           {
-            if($transArray[$nextIdx]->{condition})
+            if($transArray[$nextIdx]->{cond})
             {
-              print $fhS "  if ($transArray[$nextIdx]->{condition})\n"; #todo implement conditions
+              print $fhS "  if ($transArray[$nextIdx]->{cond})\n"; #todo implement conditions
             }
             print $fhS "  {\n";
             print $fhS "    fsmImpl.setTransByName(\"$transCoverageName\");\n";
@@ -1235,14 +1236,11 @@ sub genStateTransImpl
 
             if(YaFsmScxmlParser::hasTransitionActions($transArray[$nextIdx]))
             {
-              my @actionArray = split(/;/,$transArray[$nextIdx]->{action});
+              my @actionArray = split(/;/,$transArray[$nextIdx]->{script});
               foreach(@actionArray)
               {
                 print $fhS "    fsmImpl.getActionHandler().$_;\n";
               }
-            # print $fh "<TR><TD>$trans->{action}(";
-            #YaFsm $fh "$trans->{param}" if($trans->{param});
-            # print $fh ")</TD></TR>;\n";
             }
             if(YaFsmScxmlParser::hasTransitionEvents($transArray[$nextIdx]))
             {
@@ -1260,7 +1258,7 @@ sub genStateTransImpl
               print $fhS "    fsmImpl.enterCurrentState();\n";
             }
 
-            if($transArray[$nextIdx]->{condition} && (defined $parentName) && (0 < length($parentName)))
+            if($transArray[$nextIdx]->{cond} && (defined $parentName) && (0 < length($parentName)))
             {
               print $fhS "  }\n";
               print $fhS "  else // condition is not matched, we should now try if condition is matched by parent\n";
