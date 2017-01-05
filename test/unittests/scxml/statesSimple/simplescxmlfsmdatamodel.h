@@ -14,7 +14,7 @@ public:
 class end
 {
 public:
-  int i = 3;
+  int i;
 
 };
 
