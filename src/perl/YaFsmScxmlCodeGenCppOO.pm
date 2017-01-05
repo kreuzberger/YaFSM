@@ -148,6 +148,12 @@ sub outInterfaceFSMStateHeader
     print $fh "#include \"$file\"\n";
   }
 
+  if( %YaFsmScxmlParser::gFSMDataModel )
+  {
+    print $fh ("#include \"" . $YaFsmScxmlParser::gFSMDataModel{headerfile} . "\"\n");
+  }
+
+
 
   print $fh "\n";
   print $fh "class " . $FSMName . ";\n";
@@ -165,14 +171,7 @@ sub outInterfaceFSMStateHeader
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
   {
    # YaFsm::printDbg("trigger: $key ( $value )");
-    if( $value )
-    {
-        print $fh "  virtual void $key( " . $FSMName . "&, $value ) = 0;\n";
-    }
-    else
-    {
-        print $fh "  virtual void $key( " . $FSMName . "& ) = 0;\n";
-    }
+    print $fh "  virtual void send_$key( " . $FSMName . "&, const $key" . "& ) = 0;\n";
   }
 
 
@@ -197,24 +196,7 @@ sub printTriggerImpl
   print $fh "      if( !isLocked() )\n";
   print $fh "      {\n";
   print $fh "        setLocked( true );\n";
-  if ( $value )
-  {
-    # todo  value contains the param defintion with types, remove the types
-    print $fh "        mpoCurrentState->$key( self(),";
-    my  @params = getParamsArray($value);
-    my $paramStr;
-    foreach(@params)
-    {
-      (my $type, my $name) = getParaTypeName($_);
-      $paramStr .= "$name,";
-    }
-    chop($paramStr);
-    print $fh "$paramStr );\n";
-  }
-  else
-  {
-    print $fh "        mpoCurrentState->$key( self() );\n";
-  }
+  print $fh "        mpoCurrentState->send_$key( self(), _event );\n";
   print $fh "        setLocked( false );\n";
   print $fh "      }\n";
   print $fh "      else\n";
@@ -384,9 +366,7 @@ sub outFSMHeader
       print $fh "protected:\n";
     }
 
-    print $fh "  template<typename T>\n";
-    print $fh "  void $key( T t );\n";
-    print $fh "  virtual void $key( );\n";
+    print $fh "  void sendEvent( const $key" . "& );\n";
   }
 
   print $fh "\npublic:\n";
@@ -669,16 +649,8 @@ sub outFSMHeader
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
   {
 
-    print $fh "inline void " . $FSMName . "::$key( )\n";
+    print $fh "inline void " . $FSMName . "::sendEvent( const $key" . "& _event)\n";
     printTriggerImpl($FSMName, $fh, $key, $value);
-
-    print $fh "template <typename T>\n";
-    print $fh "inline void " . $FSMName . "::$key( T t )\n";
-    print $fh "{\n";
-    print $fh "  $key();\n";
-    print $fh "}\n";
-#    printTriggerImpl($FSMName, $fh, $key, $value);
-
     print $fh "\n";
 
   }
@@ -800,30 +772,11 @@ sub outFSMStateBaseHeader
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
   {
     #YaFsm::printDbg("trigger: $key ( $value )");
-    if( $value)
-    {
-      my @paraList = getParamsArray($value);
-      my $strTypes;
-      foreach (@paraList)
-      {
-        (my $type, my $name) = getParaTypeName($_);
-        $strTypes .= " $type /* $name */,";
-      }
-      chop($strTypes); # remove last,
-      print $fh "  inline virtual void $key(" . $FSMName . "&,$strTypes )\n";
-      print $fh "  {\n";
-      print $fh "     TraceScope( ". lc($FSMName) ."_trigger )\n";
-      print $fh "     TraceDbg1( (\"trigger $key ( $value ) not handled in state \"  + mStateName).c_str() )\n";
-      print $fh "  }\n";
-    }
-    else
-    {
-      print $fh "  inline virtual void $key(" . $FSMName . "& )\n";
-      print $fh "  {\n";
-      print $fh "     TraceScope( ". lc($FSMName) ."_trigger )\n";
-      print $fh "     TraceDbg1( (\"trigger $key not handled in state \" + mStateName).c_str() )\n";
-      print $fh "  }\n";
-    }
+    print $fh "  inline virtual void send_$key( " . $FSMName . "&, const $key". "& _event)\n";
+    print $fh "  {\n";
+    print $fh "     TraceScope( ". lc($FSMName) ."_trigger )\n";
+    print $fh "     TraceDbg1( (\"trigger $key not handled in state \" + mStateName).c_str() )\n";
+    print $fh "  }\n";
   }
 
   print $fh "\n";
@@ -963,16 +916,8 @@ sub genStateImpl
     {
       if( $trans->{source} eq $state->{id} )
       {
-        my $params = $YaFsmScxmlParser::gFSMTriggers{$trans->{event}};
-        if((defined $params) && ("" ne $params))
-        {
-          print $fhH "  virtual void $trans->{event}( ". $YaFsmScxmlParser::gFSMName . "&, $params );\n";
-        }
-        else
-        {
-          print $fhH "  virtual void $trans->{event}( ". $YaFsmScxmlParser::gFSMName . "& );\n";
-        }
-        $processedTriggers{$trans->{event}}=$params;
+        print $fhH "  virtual void send_$trans->{event}( ". $YaFsmScxmlParser::gFSMName . "&, const $trans->{event}" . "& _event );\n";
+        $processedTriggers{$trans->{event}}="";
       }
     }
   }
@@ -1184,28 +1129,11 @@ sub genStateTransImpl
 
     if($trans->{event} && !(exists($processedTriggers{$criteria})))
     {
-      my $params = $YaFsmScxmlParser::gFSMTriggers{$trans->{event}};
-      $processedTriggers{$criteria} = $params;
+      $processedTriggers{$criteria} = "";
       my $transCoverageName;
-      if((defined $params) && ("" ne $params) )
-      {
-        $transCoverageName = $trans->{source} .'_' . $trans->{event};
-        print $fhS "void State$trans->{source}::$trans->{event}( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl, $params)\n";
-        print $fhS "{\n";
-        my @paraArray= getParamsArray($params);
-        foreach(@paraArray)
-        {
-          my ($type,$name) = getParaTypeName($_);
-          printf $fhS "  (void) $name;\n";
-          $transCoverageName .= '_' . $name;
-        }
-      }
-      else
-      {
-        $transCoverageName = $trans->{source} .'_' . $trans->{event};
-        print $fhS "void State$trans->{source}::$trans->{event}( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl)\n";
-        print $fhS "{\n";
-      }
+      $transCoverageName = $trans->{source} .'_' . $trans->{event};
+      print $fhS "void State$trans->{source}::send_$trans->{event}( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl, const $trans->{event}" . "& _event)\n";
+      print $fhS "{\n";
 
       push(@{$genTransitions},$transCoverageName);
 
@@ -1256,21 +1184,7 @@ sub genStateTransImpl
               print $fhS "  else // condition is not matched, we should now try if condition is matched by parent\n";
               print $fhS "  {\n";
 
-              if((defined $params) && ("" ne $params) )
-              {
-                print $fhS "    State$parentName" . "::$trans->{event}( fsmImpl";
-                my @paraArray= getParamsArray($params);
-                foreach(@paraArray)
-                {
-                  my ($type,$name) = getParaTypeName($_);
-                  printf $fhS ", $name";
-                }
-                print $fhS " );\n";
-              }
-              else
-              {
-                print $fhS "    State$parentName" . "::$trans->{event}( fsmImpl );\n";
-              }
+              print $fhS "    State$parentName" . "::send_$trans->{event}( fsmImpl, $trans->{event} );\n";
             }
 
             print $fhS "  }\n\n";

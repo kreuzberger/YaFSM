@@ -10,12 +10,13 @@ void QTestSimpleScxmlFSM::testInitFSM()
   str = mSimpleScxmlFSM.getStateName().c_str();
   QCOMPARE(QString("Statestop"),str);
 
-  int i = 3;
-  mSimpleScxmlFSM.run(i);
+  run a;
+  mSimpleScxmlFSM.sendEvent(a);
   str = mSimpleScxmlFSM.getStateName().c_str();
   QCOMPARE(QString("Staterunning"),str);
 
-  mSimpleScxmlFSM.end();
+  end b;
+  mSimpleScxmlFSM.sendEvent(b);
   str = mSimpleScxmlFSM.getStateName().c_str();
   QCOMPARE(QString("Statestop"),str);
 

@@ -3,6 +3,21 @@
 
 #include <iostream>
 
+class run
+{
+
+public:
+  std::string name;
+  std::string data;
+};
+
+class end
+{
+public:
+  int i = 3;
+
+};
+
 class SimpleScxmlFSMDataModel
 {
 public:
