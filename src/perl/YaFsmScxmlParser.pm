@@ -47,6 +47,10 @@ our %gFSMMembers;
 our @gFSMIncludes;
 our $gImageExt="png";
 
+# for scxml
+our %gFSMDataModel;
+
+
 #my @gDotImages=("enter.png","exit.png","timerstart.png","timerstop.png");
 my @gDotImages=("enter.$gImageExt","exit.$gImageExt","timerstart.$gImageExt","timerstop.$gImageExt");
 
@@ -73,6 +77,7 @@ sub init
   {
     mkpath( $gFSMCodeOutPath, {verbose => 1, mode => 0755}) if (!(-d $gFSMCodeOutPath));
   }
+#  $YaFsm::gVerbose=1;
 }
 
 
@@ -120,7 +125,7 @@ sub readFSM
       # force array is useful for configurations that have only one entry and are not parsed into
       # array by default. So we ensure that the buildcfg always is an array!
       #  my $xmlContent = eval{$xml->XMLin("$filename", SuppressEmpty => '',ForceArray => qr/buildcfg$/)};
-      my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => [qw(state transition final data)])};
+      my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => [qw(state transition final datamodel data )])};
       #my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => qr/state$/ )};
       if ($@)
       {
@@ -235,14 +240,12 @@ sub getEnterStateName
 {
   my $state = shift;
   my $enterStateName;
-  if($state->{state})
+
+  if($state->{initial})
   {
-    foreach my $substate (@{$state->{state}})
+    if ( $state->{initial} && $state->{initial}{transition})
     {
-      if ( $substate->{type} &&  "entry" eq $substate->{type} )
-      {
-        $enterStateName = $substate->{name};
-      }
+      $enterStateName = $state->{initial}{transition}[0]{target};
     }
   }
 
@@ -306,7 +309,7 @@ sub hasTransitionActions
      || defined $trans->{assign}
   )
   {
-   	YaFsm::printDbg("Found transition actions in trigger $trans->{trigger}");
+    YaFsm::printDbg("Found transition actions in trigger $trans->{event}");
     $hasTransActions = 1;
   }
 
@@ -318,14 +321,33 @@ sub hasTransitionEvents
 {
   my $hasTransEvents = 0;
   my $trans = shift;
-  if(defined $trans->{event})
+  if(defined $trans->{send} || defined $trans->{raise})
   {
-   	YaFsm::printDbg("Found transition event in trigger $trans->{trigger}");
+    YaFsm::printDbg("Found transition event in trigger $trans->{send}") if $trans->{send};
+    YaFsm::printDbg("Found transition event in trigger $trans->{raise}") if $trans->{raise};
     $hasTransEvents = 1;
   }
 
   return $hasTransEvents;
 
+}
+
+sub scriptCodeToArray
+{
+  my $strCode = shift;
+  my @codeArray;
+
+  my @str = split(/;/,$strCode);
+  foreach(@str)
+  {
+    # remove newlines an whitespaces
+    my $str = $_;
+    $str =~s/^\s+|\s+$//g;
+    $str =~ s/\R//g;
+    push(@codeArray,"$str;") if ( 0 < length($str) );
+  }
+
+  return @codeArray;
 }
 
 
@@ -345,23 +367,52 @@ sub parseFSM
 
     push(@gFSMStates, $state->{id});
 
-    if(hasSubStates($state))
-    {
-      parseFSM($state, $state->{id}, $parentName);
-    }
+    my $transIdx = 0;
 
-    foreach my $trans (@{$currRef->{transition}})
+    foreach my $trans (@{$state->{transition}})
     {
-      if($trans->{trigger})
+      if($trans->{event})
       {
         YaFsm::printDbg("transition on state $parentName: startstate $state->{id}, endstate $trans->{target}, trigger $trans->{event}");
-
+        YaFsm::printDbg("trigger: $trans->{event} ()");
+        $trans->{param} = "";
+        $gFSMTriggers{$trans->{event}}= $trans->{param};
       }
       else
       {
         YaFsm::printDbg("transition on state $parentName: trigger <empty>");
       }
       $trans->{source} = $state->{id};
+      if(%gFSMDataModel && $trans->{script})
+      {
+        push(@{$gFSMActions{$state->{id}}}, { type => "transition", name => "transition_$state->{id}_$trans->{event}_$transIdx", script => scriptCodeToArray($trans->{script}), source => $state->{id} } )  ;
+      }
+
+      $transIdx++;
+
+    }
+
+    if($state->{onentry})
+    {
+      if( %gFSMDataModel && $state->{onentry}{script} )
+      {
+        push(@{$gFSMActions{$state->{id}}}, { type => "onentry", name => "$state->{id}_onEntry", script => scriptCodeToArray($state->{onentry}{script}), source => $state->{id} } )  ;
+
+      }
+    }
+
+    if($state->{onexit})
+    {
+      if( %gFSMDataModel && $state->{onexit}{script} )
+      {
+        push(@{$gFSMActions{$state->{id}}}, { type => "onexit", name => "$state->{id}_onExit", script => scriptCodeToArray($state->{onexit}{script}), source => $state->{id} } )  ;
+      }
+    }
+
+
+    if(hasSubStates($state))
+    {
+      parseFSM($state, $state->{id}, $parentName);
     }
 
   }
@@ -370,158 +421,65 @@ sub parseFSM
   $gStateLevel--;
 
 }
-
-sub parseScxmlFSM
-{
-  my $currRef = shift;
-  my $parentName = shift;
-  my $parentParentName=shift;
-  $gStateLevel++;
-
-
-  foreach my $state (@{$currRef->{state}})
-  {
-    YaFsm::printDbg("states on substate of $parentName: $state->{id}");
-    YaFsm::printDbg("$parentName state level $gStateLevel");
-
-    push(@gFSMStates, $state->{id});
-
-    if(hasSubStates($state))
-    {
-      parseScxmlFSM($state, $state->{id}, $parentName);
-    }
-
-    foreach my $trans (@{$currRef->{transition}})
-    {
-      if($trans->{event})
-      {
-        YaFsm::printDbg("transition on state  $state->{id}: startstate $state->{id}, endstate $trans->{target}, trigger $trans->{event}");
-      }
-      else
-      {
-        YaFsm::printDbg("transition on state $state->{id}: trigger <empty>");
-      }
-    }
-  }
-
-  foreach my $state (@{$currRef->{final}})
-  {
-    YaFsm::printDbg("states on substate of $parentName: $state->{id}");
-    YaFsm::printDbg("$parentName state level $gStateLevel");
-
-    push(@gFSMStates, $state->{id});
-
-    if(hasSubStates($state))
-    {
-      parseScxmlFSM($state, $state->{id}, $parentName);
-    }
-
-    foreach my $trans (@{$currRef->{transition}})
-    {
-      if($trans->{event})
-      {
-        YaFsm::printDbg("transition on state  $state->{id}: startstate $state->{id}, endstate $trans->{target}, trigger $trans->{event}");
-      }
-      else
-      {
-        YaFsm::printDbg("transition on state  $state->{id}: trigger <empty>");
-      }
-    }
-  }
-
-
-  $gStateLevel--;
-
-}
-
 
 
 sub parseDefinitions
 {
   my $currRef = shift;
 
-  foreach my $data (@{$currRef->{datamodel}})
-  {
-    YaFsm::printDbg("found data element");
-  }
 
-
-  foreach my $action (@{$currRef->{action}})
+  if( $currRef->{datamodel} )
   {
-    #my $cnt = keys(%{$cfg});
-   	#YaFsm::printDbg("$cnt");
-    if(!defined $action->{param})
+    my $strDataModel;
+    if(ref($currRef->{datamodel}) eq 'ARRAY')
     {
-      $action->{param}="";
-    }
-    YaFsm::printDbg("action: $action->{name} ( $action->{param} )");
-    $gFSMActions{$action->{name}}= $action->{param};
-  }
-
-  foreach my $trigger (@{$currRef->{trigger}})
-  {
-    #my $cnt = keys(%{$cfg});
-   	#YaFsm::printDbg("$cnt");
-
-    #todo
-    # timer stuff are no triggers
-    if(!defined $trigger->{param})
-    {
-      $trigger->{param}="";
-    }
-    YaFsm::printDbg("trigger: $trigger->{name} ( $trigger->{param} )");
-    $gFSMTriggers{$trigger->{name}}= $trigger->{param};
-  }
-
-  foreach my $timer (@{$currRef->{timer}})
-  {
-    #my $cnt = keys(%{$cfg});
-   	#YaFsm::printDbg("$cnt");
-    my %timerData;
-    if($timer->{cnt})
-    {
-      YaFsm::printDbg("timer:  $timer->{name}, timeout(ms): $timer->{ms}, repeat cnt: $timer->{cnt} ");
-      $gFSMTimers{$timer->{name}}->{ms}= $timer->{ms};
-      $gFSMTimers{$timer->{name}}->{cnt}= $timer->{cnt};
+      YaFsm::printDbg("data model string $currRef->{datamodel}[0]");
+      $strDataModel = $currRef->{datamodel}[0];
     }
     else
     {
-      YaFsm::printDbg("timer:  $timer->{name}, timeout(ms): $timer->{ms}, single shot");
-      $gFSMTimers{$timer->{name}}->{ms}= $timer->{ms};
-      $gFSMTimers{$timer->{name}}->{cnt}= 1;
+      YaFsm::printDbg("data model string $currRef->{datamodel}");
+      $strDataModel = $currRef->{datamodel};
     }
-    $gFSMTriggers{"timer$timer->{name}"}= "";
+
+    my @modelInfo = split(/:/,$strDataModel);
+    YaFsm::printDbg(@modelInfo);
+
+    if($#modelInfo == 2 )
+    {
+      if ("cplusplus" eq $modelInfo[0])
+      {
+        $gFSMDataModel{type}=$modelInfo[0];
+        $gFSMDataModel{classname}=$modelInfo[1];
+        $gFSMDataModel{headerfile}=$modelInfo[2];
+      }
+      else
+      {
+        YaFsm::printFatal("invalid datamodel type $modelInfo[0]");
+      }
+
+    }
+    else
+    {
+      YaFsm::printFatal("invalid datamodel definition string $strDataModel");
+    }
+
+
+    # check for data members
+    if(ref($currRef->{datamodel}) eq 'ARRAY')
+    {
+      YaFsm::printDbg("data model string $currRef->{datamodel}[1]");
+      foreach my $data (@{$currRef->{datamodel}[1]{data}})
+      {
+        #YaFsm::printDbg("data:  $data->{id} $data->{expr}");
+        if ($data->{src})
+        {
+          YaFsm::printFatal("data type src not supported");
+        }
+        $gFSMMembers{$data->{id}}= { init => $data->{expr}} ;
+      }
+    }
   }
-
-  foreach my $event (@{$currRef->{event}})
-  {
-    #my $cnt = keys(%{$cfg});
-   	#YaFsm::printDbg("$cnt");
-    push(@gFSMEvents,$event->{name});
-    YaFsm::printDbg("event:  $event->{name}");
-
-    #auto generate triggers
-    $gFSMTriggers{"event$event->{name}"}= "";
-
-  }
-
-  foreach my $member (@{$currRef->{member}})
-  {
-    #my $cnt = keys(%{$cfg});
-    #YaFsm::printDbg("$cnt");
-    YaFsm::printDbg("member:  $member->{type} $member->{name}, init $member->{init}");
-    $gFSMMembers{$member->{name}}= { type => $member->{type}, init => $member->{init}} ;
-  }
-
-  foreach my $include (@{$currRef->{include}})
-  {
-    #my $cnt = keys(%{$cfg});
-    #YaFsm::printDbg("$cnt");
-    YaFsm::printDbg("include:  $include->{file}");
-    push(@gFSMIncludes, $include->{file});
-  }
-
-
 }
 
 

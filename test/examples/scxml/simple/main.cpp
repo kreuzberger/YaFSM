@@ -1,8 +1,7 @@
-#include "ISimpleFSMActionHandler.h"
 #include "SimpleFSM.h"
 #include <QApplication>
 
-class Simple: public ISimpleFSMActionHandler
+class Simple
 {
 public:
   Simple();
@@ -24,8 +23,7 @@ inline Simple& self() {return *this;}
 
 
 Simple::Simple()
-: ISimpleFSMActionHandler()
-, mSimpleFSM(this)
+  : mSimpleFSM()
 {
   mSimpleFSM.initFSM();
 }

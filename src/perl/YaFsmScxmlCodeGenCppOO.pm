@@ -76,32 +76,6 @@ sub outInterfaceFSMActionHandlerHeader
     print $fh "#include \"$file\"\n";
   }
 
-  print $fh "\n";
-  print $fh "class I" . $FSMName . "ActionHandler\n";
-  print $fh "{\n";
-  print $fh "\n";
-  print $fh "public:\n";
-  print $fh "I" . $FSMName . "ActionHandler() {}\n";
-  print $fh "  virtual ~I" . $FSMName . "ActionHandler() {}\n";
-  print $fh "\n";
-  print $fh "  // defined actions\n";
-
-  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMActions) )
-  {
-    YaFsm::printDbg("action: $key ( $value )");
-    if($value)
-    {
-      print $fh "  virtual void $key( $value ) = 0;\n";
-    }
-    else
-    {
-      print $fh "  virtual void $key( void ) = 0;\n";
-    }
- }
-
-  print $fh "};\n";
-  print $fh "\n";
-  print $fh "\n";
   print $fh "#endif\n";
 
   close( $fh );
@@ -134,7 +108,7 @@ sub outInterfaceFSMHeader
   print $fh "  // definition of triggers\n";
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
   {
-    YaFsm::printDbg("trigger: $key ( $value )");
+    #YaFsm::printDbg("trigger: $key ( $value )");
     if( !($key =~ m/^timer/) )
     {
       print $fh "public:\n";
@@ -190,7 +164,7 @@ sub outInterfaceFSMStateHeader
   print $fh "  // definiton of triggers\n";
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
   {
-    YaFsm::printDbg("trigger: $key ( $value )");
+   # YaFsm::printDbg("trigger: $key ( $value )");
     if( $value )
     {
         print $fh "  virtual void $key( " . $FSMName . "&, $value ) = 0;\n";
@@ -220,8 +194,12 @@ sub outFSMHeader
 
   print $fh "#include \"I" . $FSMName . ".h\"\n";
   print $fh "#include \"" . $FSMName . "StateImpl.h\"\n";
-  print $fh "#include \"I" . $FSMName . "ActionHandler.h\"\n";
-#  print $fh "#include \"" . $FSMName . "StateBase.h\"\n";
+
+  if( %YaFsmScxmlParser::gFSMDataModel )
+  {
+    print $fh ("#include \"" . $YaFsmScxmlParser::gFSMDataModel{headerfile} . "\"\n");
+  }
+
   print $fh "#include \"IFSMTimerCB.h\"\n";
   print $fh "#include \"IFSMTimer.h\"\n";
   print $fh "#include \"FSMTimer.h\"\n";
@@ -279,9 +257,12 @@ sub outFSMHeader
 
   print $fh "\n";
   print $fh "public:\n";
-  print $fh "  " . $FSMName . "(I" . $FSMName . "ActionHandler* poActionHandler)\n";
-  print $fh "  : mpoActionHandler(poActionHandler)\n";
-  print $fh "  , mpoCurrentState( 0 )\n";
+  print $fh "  " . $FSMName . "()\n";
+  print $fh "  : mpoCurrentState( 0 )\n";
+  if( %YaFsmScxmlParser::gFSMDataModel )
+  {
+    print $fh ("  , mDataModel()\n");
+  }
   print $fh "  , mbLockTrigger( false )\n";
   print $fh "  , mbInit( false )\n";
   print $fh "  , mFSMTimer( self() )\n";
@@ -329,14 +310,19 @@ sub outFSMHeader
   print $fh "\n";
 
   print $fh "  void initFSM( void );\n";
-  print $fh "  void setActionHandler( I" . $FSMName . "ActionHandler* poActionHandler) { mpoActionHandler = poActionHandler; assert( 0 != poActionHandler ); }\n";
   print $fh "  virtual void setTimerID( int iTimerId, int iTimeOutMs, int iRepeatCnt );\n";
   print $fh "  virtual void sendEventID( int iEventId );\n";
+
+  if( %YaFsmScxmlParser::gFSMDataModel )
+  {
+    print $fh "  $YaFsmScxmlParser::gFSMDataModel{classname}& model() { return mDataModel; }\n";
+  }
+
 
   print $fh "  // definiton of triggers\n";
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
   {
-    YaFsm::printDbg("trigger: $key ( $value )");
+   # YaFsm::printDbg("trigger: $key ( $value )");
     if( !($key =~ m/^timer/) )
     {
       print $fh "public:\n";
@@ -357,19 +343,13 @@ sub outFSMHeader
   }
 
   print $fh "\npublic:\n";
-  print $fh "  // definiton of member set/get\n";
-  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMMembers) )
-  {
-    #YaFsm::printDbg("trigger: $key ( $value )");
-    print $fh "  virtual void set" . $key ."($value->{type} val);\n";
-    print $fh "  virtual $value->{type} get" . $key ."(void) const;\n";
-  }
 
   print $fh "// for getting statistics information\n";
   print $fh "  void dumpCoverage( void ) const;\n";
 
 
   print $fh "\n  protected:\n";
+
   print $fh "  void setStateByName( const std::string& name );\n";
   print $fh "  void setTransByName( const std::string& name );\n";
   print $fh "  void enterCurrentState();\n";
@@ -379,7 +359,6 @@ sub outFSMHeader
   print $fh "  virtual void processTimerEventID( int iTimerId );\n";
   print $fh "  virtual void processEventID( int iEventId );\n";
 
-  print $fh "  I" . $FSMName . "ActionHandler& getActionHandler() {assert( 0 != mpoActionHandler ); return *mpoActionHandler;}\n";
   print $fh "\n";
   print $fh "//todo make this private and allow test makros to access this\n";
 
@@ -437,9 +416,12 @@ sub outFSMHeader
   print $fh "  bool isInitialised( void );\n";
   print $fh "  void registerEventID( int );\n";
 
-  print $fh "  I" . $FSMName . "ActionHandler* mpoActionHandler;\n";
-  print $fh "\n";
   print $fh "  " . $FSMName . "StateBase* mpoCurrentState;\n";
+  if( %YaFsmScxmlParser::gFSMDataModel )
+  {
+    print $fh ("  $YaFsmScxmlParser::gFSMDataModel{classname} mDataModel;\n");
+  }
+
   print $fh "\n";
   print $fh "  // definition of all states as members\n";
   foreach my $state (@YaFsmScxmlParser::gFSMStates)
@@ -517,7 +499,6 @@ sub outFSMHeader
   print $fh "inline void " . $FSMName . "::initFSM( void )\n";
   print $fh "{\n";
   print $fh "  mbInit = true;\n";
-  print $fh "  assert( 0 != mpoActionHandler );\n";
   print $fh "  enterCurrentState();\n";
   print $fh "}\n\n";
   print $fh "\n";
@@ -640,7 +621,7 @@ sub outFSMHeader
   print $fh "// declaration of all triggers\n";
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
   {
-    YaFsm::printDbg("trigger: $key ( $value )");
+    #YaFsm::printDbg("trigger: $key ( $value )");
     if ( $value )
     {
       print $fh "inline void " . $FSMName . "::$key( $value )\n";
@@ -695,27 +676,6 @@ sub outFSMHeader
 
   }
   print $fh "\n";
-  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMMembers) )
-  {
-    #YaFsm::printDbg("trigger: $key ( $value )");
-    print $fh "inline void " . $FSMName ."::set" . $key ."($value->{type} val)\n";
-    print $fh "{\n";
-    print $fh "  // todo ueber alle states iterieren\n";
-    print $fh "  std::map<std::string, " . $FSMName ."StateBase*>::iterator it;\n";
-    print $fh "  for(it = moStateMap.begin(); it != moStateMap.end(); ++it)\n";
-    print $fh "  {\n";
-    print $fh "    (*it).second->set$key(val);\n";
-    print $fh "  }\n";
-    print $fh "}\n";
-    print $fh "\n";
-    print $fh "inline $value->{type} " . $FSMName ."::get" . $key ."(void) const\n";
-    print $fh "{\n";
-    print $fh "  return mpoCurrentState->get" . $key . "();\n";
-    print $fh "}\n";
-    print $fh "\n";
-  }
-
-
   print $fh "inline void " . $FSMName . "::dumpCoverage( void ) const\n";
   print $fh "{\n";
   print $fh "  TraceScope( ". lc($FSMName) ." )\n";
@@ -772,14 +732,16 @@ sub outFSMStateBaseHeader
   print $fh "#define _" . uc($FSMName) . "StateBase_H\n";
   print $fh "\n";
   print $fh "#include \"I" . $FSMName . "State.h\"\n";
-  print $fh "#include <string>\n";
-  print $fh "#include <iostream>\n";
-  print $fh "#include <sstream>\n";
+
   print $fh "//includes by xml definition\n";
   foreach my $file ( @YaFsmScxmlParser::gFSMIncludes )
   {
     print $fh "#include \"$file\"\n";
   }
+
+  print $fh "#include <string>\n";
+  print $fh "#include <iostream>\n";
+  print $fh "#include <sstream>\n";
 
 
   print $fh "\n";
@@ -809,17 +771,13 @@ sub outFSMStateBaseHeader
   print $fh "\n";
 
   print $fh "class " . $FSMName . "StateBase: public I" . $FSMName . "State\n";
+
   print $fh "{\n";
   print $fh "  friend class " . $FSMName . ";\n";
   print $fh "\n";
   print $fh "public:\n";
   print $fh "  " . $FSMName . "StateBase( )\n";
   print $fh "   : mStateName()\n";
-  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMMembers) )
-  {
-    #YaFsm::printDbg("trigger: $key ( $value )");
-    print $fh "    , m$key( $value->{init} )\n";
-  }
   print $fh "    {\n";
   print $fh "    }\n";
 
@@ -834,7 +792,7 @@ sub outFSMStateBaseHeader
 
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
   {
-    YaFsm::printDbg("trigger: $key ( $value )");
+    #YaFsm::printDbg("trigger: $key ( $value )");
     if( $value)
     {
       my @paraList = getParamsArray($value);
@@ -860,26 +818,14 @@ sub outFSMStateBaseHeader
       print $fh "  }\n";
     }
   }
-  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMMembers) )
-  {
-    #YaFsm::printDbg("trigger: $key ( $value )");
-    print $fh "void set" . $key ."($value->{type} val);\n";
-    print $fh "$value->{type} get" . $key ."(void) const;\n";
-  }
+
   print $fh "\n";
 
   print $fh "\n";
   print $fh "protected:\n";
   print $fh "  std::string mStateName;\n";
-  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMMembers) )
-  {
-    #YaFsm::printDbg("trigger: $key ( $value )");
-    print $fh "$value->{type} m$key;\n";
-  }
 
-
-
-print $fh "};\n";
+  print $fh "};\n";
   print $fh "\n";
   print $fh "inline const std::string& " . $FSMName . "StateBase::getStateName() const\n";
   print $fh "{\n";
@@ -891,26 +837,12 @@ print $fh "};\n";
   print $fh "  mStateName = str;\n";
   print $fh "}\n";
   print $fh "\n";
-  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMMembers) )
-  {
-    #YaFsm::printDbg("trigger: $key ( $value )");
-    print $fh "inline void " . $FSMName ."StateBase::set" . $key ."($value->{type} val)\n";
-    print $fh "{\n";
-    print $fh "  m$key = val;\n";
-    print $fh "}\n";
-    print $fh "\n";
-    print $fh "inline $value->{type} " . $FSMName ."StateBase::get" . $key ."(void) const\n";
-    print $fh "{\n";
-    print $fh "  return m$key;\n";
-    print $fh "}\n";
-    print $fh "\n";
-  }
-  #print $fh "\n";
 
 
   print $fh "#endif\n";
   close( $fh );
 }
+
 
 sub outFSMStates
 {
@@ -929,6 +861,11 @@ sub outFSMStates
   print $fhH "#include \"" . $FSMName . "StateBase.h\"\n";
   print $fhH "\n";
   print $fhH "// definitions of all States as classes\n";
+
+  if( %YaFsmScxmlParser::gFSMDataModel )
+  {
+    print $fhH "class $YaFsmScxmlParser::gFSMDataModel{classname};\n";
+  }
 
   print $fhH "namespace N". $FSMName . "\n";
   print $fhH "{\n";
@@ -977,9 +914,10 @@ sub parseFSM
     {
       genStateImpl($fhH, $fhS, $state,$currRef,$parentName);
     }
+    genStateTransImpl($fhH, $fhS, $state,$parentName,\@{$genTransitions});
+
   }
 
-  genStateTransImpl($fhH, $fhS, $currRef,$parentName,\@{$genTransitions});
   #print   Dumper(@{$genTransitions});
 }
 
@@ -1012,9 +950,8 @@ sub genStateImpl
   # declare all triggers handled by this state
   print $fhH "protected:\n";
   my %processedTriggers;
-  foreach my $trans (@{$currRef->{transition}})
+  foreach my $trans (@{$state->{transition}})
   {
-  # print $fh "  $trans->{source} -> $trans->{end} ";
     if($trans->{event} && !(exists($processedTriggers{$trans->{event}})))
     {
       if( $trans->{source} eq $state->{id} )
@@ -1035,6 +972,32 @@ sub genStateImpl
   print $fhH "private:\n";
   print $fhH "  void enter( " . $YaFsmScxmlParser::gFSMName . "& );\n";
   print $fhH "  void exit( " . $YaFsmScxmlParser::gFSMName . "& );\n";
+
+  # implement actions
+  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMActions) )
+  {
+    foreach my $action (@{$value})
+    {
+      #print Dumper($action);
+      if($key eq $state->{id} )
+      {
+        #YaFsm::printDbg("trigger: $key ( $value )");
+        if( $action->{script})
+        {
+          if( %YaFsmScxmlParser::gFSMDataModel )
+          {
+            print $fhH "  void $action->{name}( " .  $YaFsmScxmlParser::gFSMDataModel{classname} . "& model );\n";
+          }
+          else
+          {
+            print $fhH "  void $action->{name}();\n";
+          }
+        }
+      }
+    }
+  }
+
+
   # close state header class
   print $fhH "};\n\n";
 
@@ -1046,6 +1009,40 @@ sub genStateImpl
   print $fhS "State".$state->{id}."::~State".$state->{id}."()\n";
   print $fhS "{\n";
   print $fhS "}\n\n";
+
+
+  # implement actions
+  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMActions) )
+  {
+    foreach my $action (@{$value})
+    {
+#      print Dumper($action);
+      if($key eq $state->{id} )
+      {
+        #YaFsm::printDbg("trigger: $key ( $value )");
+        if( $action->{script})
+        {
+          if( %YaFsmScxmlParser::gFSMDataModel )
+          {
+            print $fhS "void State".$state->{id}."::$action->{name}( " .  $YaFsmScxmlParser::gFSMDataModel{classname} . "& model )\n";
+          }
+          else
+          {
+            print $fhS "void State".$state->{id}."::$action->{name}()\n";
+          }
+          print $fhS "{\n";
+          my @codeList = $action->{script};
+          foreach (@codeList)
+          {
+            print $fhS "  $_\n";
+          }
+          print $fhS "}\n\n";
+
+        }
+      }
+    }
+  }
+
 
 #      if(YaFsmScxmlParser::hasStateActions($state))
   {
@@ -1080,13 +1077,9 @@ sub genStateImpl
         }
       }
 
-      if(defined $state->{onentry}{script})
+      if(%YaFsmScxmlParser::gFSMDataModel && defined $state->{onentry}{script})
       {
-        my @str = split(/;/,$state->{onentry}{script});
-        foreach(@str)
-        {
-          print $fhS "  fsmImpl.getActionHandler()." . $_ .";\n";
-        }
+        print $fhS ( "  " . $state->{id} ."_onEntry(fsmImpl.model());\n" );
       }
 
       if(defined $state->{evententer})
@@ -1132,13 +1125,9 @@ sub genStateImpl
         }
       }
 
-      if(defined $state->{onexit}{script})
+      if(%YaFsmScxmlParser::gFSMDataModel && defined $state->{onexit}{script})
       {
-        my @str = split(/;/,$state->{onexit}{script});
-        foreach(@str)
-        {
-          print $fhS "  fsmImpl.getActionHandler()." . $_ . ";\n";
-        }
+        print $fhS ( "  " . $state->{id} . "_onExit(fsmImpl.model());\n" );
       }
 
       if(defined $state->{eventexit})
@@ -1236,11 +1225,7 @@ sub genStateTransImpl
 
             if(YaFsmScxmlParser::hasTransitionActions($transArray[$nextIdx]))
             {
-              my @actionArray = split(/;/,$transArray[$nextIdx]->{script});
-              foreach(@actionArray)
-              {
-                print $fhS "    fsmImpl.getActionHandler().$_;\n";
-              }
+              print $fhS ( "    transition_" . $transArray[$nextIdx]->{source} . "_" . $transArray[$nextIdx]->{event} . "_$idx(fsmImpl.model());\n" );
             }
             if(YaFsmScxmlParser::hasTransitionEvents($transArray[$nextIdx]))
             {

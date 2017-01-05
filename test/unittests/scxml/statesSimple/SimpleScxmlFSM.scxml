@@ -1,28 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" binding="early" xmlns:qt="http://www.qt.io/2015/02/scxml-ext" name="SimpleScxmlFSM" qt:editorversion="4.2.0" initial="stop">
-  <state id="stop">
-    <transition event="run" target="run" cond="">
-    <script>
-      onRun();
-    </script>
-    </transition>
-  </state>
-  <state id="run">
-    <initial>
-      <transition target="running"/>
-    </initial>
-    <state id="running">
-      <onentry>
-        <script>
-          onEnterRun();
-        </script>
-      </onentry>
-      <onexit>
-        <script>
-          onExitRun();
-        </script>
-      </onexit>
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" binding="early" xmlns:qt="http://www.qt.io/2015/02/scxml-ext" name="SimpleScxmlFSM" qt:editorversion="4.2.0" datamodel="cplusplus:SimpleScxmlFSMDataModel:simplescxmlfsmdatamodel.h" initial="stop">
+    <qt:editorinfo initialGeometry="46.33;-49.72;-20;-20;40;40"/>
+    <datamodel>
+        <data id="timer" expr="2000"/>
+    </datamodel>
+    <state id="stop">
+        <qt:editorinfo scenegeometry="46.33;92.67;-13.67;42.67;120;100" geometry="46.33;92.67;-60;-50;120;100"/>
+        <transition type="internal" event="run" target="run">
+            <script>model.onRun();</script>
+        </transition>
     </state>
-    <transition event="end" target="stop"/>
-  </state>
+    <state id="run">
+        <qt:editorinfo scenegeometry="428.29;107.77;348.29;7.56;421;626.21" geometry="428.29;107.77;-80;-100.21;421;626.21"/>
+        <initial>
+            <qt:editorinfo scenegeometry="428.29;107.77;408.29;87.77;40;40" geometry="0;0;-20;-20;40;40"/>
+            <transition target="running"/>
+        </initial>
+        <transition type="internal" event="end" target="stop">
+            <qt:editorinfo startTargetFactors="6.82;63.33" endTargetFactors="89.71;70.43"/>
+        </transition>
+        <state id="running">
+            <qt:editorinfo scenegeometry="497.22;210.19;437.22;160.19;120;100" geometry="68.93;102.42;-60;-50;120;100"/>
+            <onentry>
+                <script>model.onEnterRun();</script>
+                <raise event="end"/>
+            </onentry>
+            <onexit>
+                <script>model.onExitRun();</script>
+            </onexit>
+        </state>
+    </state>
 </scxml>
