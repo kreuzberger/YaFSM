@@ -92,44 +92,44 @@ sub outInterfaceFSMHeader
   print $fh "#define I" . uc($FSMName) . "_H\n";
   print $fh "\n";
 
-  print $fh "//includes by xml definition\n";
-  foreach my $file ( @YaFsmScxmlParser::gFSMIncludes )
-  {
-    print $fh "#include \"$file\"\n";
-  }
+#  print $fh "//includes by xml definition\n";
+#  foreach my $file ( @YaFsmScxmlParser::gFSMIncludes )
+#  {
+#    print $fh "#include \"$file\"\n";
+#  }
 
-  print $fh "\n";
-  print $fh "class I" . $FSMName . "\n";
-  print $fh "{\n";
-  print $fh "public:\n";
-  print $fh "  I" . $FSMName . "() {}\n";
-  print $fh "  virtual ~I" . $FSMName . "() {}\n";
-  print $fh "\n";
-  print $fh "  // definition of triggers\n";
-  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
-  {
-    #YaFsm::printDbg("trigger: $key ( $value )");
-    if( !($key =~ m/^timer/) )
-    {
-      print $fh "public:\n";
-    }
-    else
-    {
-      print $fh "protected:\n";
-    }
+#  print $fh "\n";
+#  print $fh "class I" . $FSMName . "\n";
+#  print $fh "{\n";
+#  print $fh "public:\n";
+#  print $fh "  I" . $FSMName . "() {}\n";
+#  print $fh "  virtual ~I" . $FSMName . "() {}\n";
+#  print $fh "\n";
+#  print $fh "  // definition of triggers\n";
+#  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
+#  {
+#    #YaFsm::printDbg("trigger: $key ( $value )");
+#    if( !($key =~ m/^timer/) )
+#    {
+#      print $fh "public:\n";
+#    }
+#    else
+#    {
+#      print $fh "protected:\n";
+#    }
 
-    if ( $value )
-    {
-      print $fh "  virtual void $key( $value ) = 0;\n";
-    }
-    else
-    {
-      print $fh "  virtual void $key( void ) = 0;\n";
-    }
-  }
+#    if ( $value )
+#    {
+#      print $fh "  virtual void $key( $value ) = 0;\n";
+#    }
+#    else
+#    {
+#      print $fh "  virtual void $key( void ) = 0;\n";
+#    }
+#  }
 
-  print $fh "};\n";
-  print $fh "\n";
+ # print $fh "};\n";
+ # print $fh "\n";
   print $fh "#endif\n";
   close( $fh );
 }
@@ -180,6 +180,57 @@ sub outInterfaceFSMStateHeader
   print $fh "\n";
   print $fh "#endif\n";
   close( $fh );
+}
+
+sub printTriggerImpl
+{
+  my $FSMName = shift;
+  my $fh = shift;
+  my $key = shift;
+  my $value = shift;
+
+  print $fh "{\n";
+  print $fh "  if( 0 != mpoCurrentState )\n";
+  print $fh "  {\n";
+  print $fh "    if( isInitialised() )\n";
+  print $fh "    {\n";
+  print $fh "      if( !isLocked() )\n";
+  print $fh "      {\n";
+  print $fh "        setLocked( true );\n";
+  if ( $value )
+  {
+    # todo  value contains the param defintion with types, remove the types
+    print $fh "        mpoCurrentState->$key( self(),";
+    my  @params = getParamsArray($value);
+    my $paramStr;
+    foreach(@params)
+    {
+      (my $type, my $name) = getParaTypeName($_);
+      $paramStr .= "$name,";
+    }
+    chop($paramStr);
+    print $fh "$paramStr );\n";
+  }
+  else
+  {
+    print $fh "        mpoCurrentState->$key( self() );\n";
+  }
+  print $fh "        setLocked( false );\n";
+  print $fh "      }\n";
+  print $fh "      else\n";
+  print $fh "      {\n";
+  print $fh "        TraceScope( ". lc($FSMName) ."_state )\n";
+  print $fh "        TraceError( \"forbidden call to trigger ". $key . " from action\" )\n";
+  print $fh "      }\n";
+  print $fh "    }\n";
+  print $fh "    else\n";
+  print $fh "    {\n";
+  print $fh "      TraceScope( ". lc($FSMName) ."_state )\n";
+  print $fh "      TraceError( \"call to trigger ". $key . " before initFSM()\" )\n";
+  print $fh "    }\n";
+
+  print $fh "  }\n";
+  print $fh "}\n";
 }
 
 sub outFSMHeader
@@ -242,8 +293,9 @@ sub outFSMHeader
   print $fh "class " . $FSMName . "StateBase;\n";
 
   # print $fh "#include \"ProUnit_" . $FSMName . "_.h\"\n";
-  print $fh "\nclass " . $FSMName . ": public I" . $FSMName . "\n";
-  print $fh " , public IFSMTimerCB\n";
+#  print $fh "\nclass " . $FSMName . ": public I" . $FSMName . "\n";
+  print $fh "\nclass " . $FSMName . "\n";
+  print $fh " : public IFSMTimerCB\n";
   print $fh " , public IFSMTimer\n";
   print $fh " , public IFSMEventCB\n";
   print $fh " , public IFSMEvent\n";
@@ -332,14 +384,9 @@ sub outFSMHeader
       print $fh "protected:\n";
     }
 
-    if( $value )
-    {
-        print $fh "  virtual void $key( $value );\n";
-    }
-    else
-    {
-        print $fh "  virtual void $key( void );\n";
-    }
+    print $fh "  template<typename T>\n";
+    print $fh "  void $key( T t );\n";
+    print $fh "  virtual void $key( );\n";
   }
 
   print $fh "\npublic:\n";
@@ -621,57 +668,17 @@ sub outFSMHeader
   print $fh "// declaration of all triggers\n";
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
   {
-    #YaFsm::printDbg("trigger: $key ( $value )");
-    if ( $value )
-    {
-      print $fh "inline void " . $FSMName . "::$key( $value )\n";
-    }
-    else
-    {
-      print $fh "inline void " . $FSMName . "::$key( void )\n";
-    }
-    print $fh "{\n";
-    print $fh "  if( 0 != mpoCurrentState )\n";
-    print $fh "  {\n";
-    print $fh "    if( isInitialised() )\n";
-    print $fh "    {\n";
-    print $fh "      if( !isLocked() )\n";
-    print $fh "      {\n";
-    print $fh "        setLocked( true );\n";
-    if ( $value )
-    {
-      # todo  value contains the param defintion with types, remove the types
-      print $fh "        mpoCurrentState->$key( self(),";
-      my  @params = getParamsArray($value);
-      my $paramStr;
-      foreach(@params)
-      {
-        (my $type, my $name) = getParaTypeName($_);
-        $paramStr .= "$name,";
-      }
-      chop($paramStr);
-      print $fh "$paramStr );\n";
-    }
-    else
-    {
-      print $fh "        mpoCurrentState->$key( self() );\n";
-    }
-    print $fh "        setLocked( false );\n";
-    print $fh "      }\n";
-    print $fh "      else\n";
-    print $fh "      {\n";
-    print $fh "        TraceScope( ". lc($FSMName) ."_state )\n";
-    print $fh "        TraceError( \"forbidden call to trigger ". $key . " from action\" )\n";
-    print $fh "      }\n";
-    print $fh "    }\n";
-    print $fh "    else\n";
-    print $fh "    {\n";
-    print $fh "      TraceScope( ". lc($FSMName) ."_state )\n";
-    print $fh "      TraceError( \"call to trigger ". $key . " before initFSM()\" )\n";
-    print $fh "    }\n";
 
-    print $fh "  }\n";
+    print $fh "inline void " . $FSMName . "::$key( )\n";
+    printTriggerImpl($FSMName, $fh, $key, $value);
+
+    print $fh "template <typename T>\n";
+    print $fh "inline void " . $FSMName . "::$key( T t )\n";
+    print $fh "{\n";
+    print $fh "  $key();\n";
     print $fh "}\n";
+#    printTriggerImpl($FSMName, $fh, $key, $value);
+
     print $fh "\n";
 
   }

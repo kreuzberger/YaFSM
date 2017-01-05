@@ -22,7 +22,7 @@
         <state id="running">
             <qt:editorinfo scenegeometry="497.22;210.19;437.22;160.19;120;100" geometry="68.93;102.42;-60;-50;120;100"/>
             <onentry>
-                <script>model.onEnterRun();</script>
+                <script>model.onEnterRunning();</script>
                 <raise event="end"/>
             </onentry>
             <onexit>

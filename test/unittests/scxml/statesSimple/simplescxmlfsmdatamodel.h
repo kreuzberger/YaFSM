@@ -5,12 +5,19 @@
 
 class SimpleScxmlFSMDataModel
 {
+public:
+  SimpleScxmlFSMDataModel()
+  : mCompareState(0)
+  {}
 
 public:
-  void onEnterRun( void )   {  std::cout << "onEnterRun called on 'TestSimpleScxmlFSM'" << std::endl;  }
-  void onExitRun( void )    {  std::cout << "onExitRun called on 'TestSimpleScxmlFSM'" << std::endl;  }
+  void onEnterRunning( void )   {  std::cout << "onEnterRun called on 'TestSimpleScxmlFSM'" << std::endl; mCompareState = 2; }
+  void onExitRun( void )    {  std::cout << "onExitRun called on 'TestSimpleScxmlFSM'" << std::endl;  mCompareState = 3;}
   //virtual void onRun( void )        {  std::cout << "onRun called on 'TestSimpleFSM'" << std::endl;  }
-  void onRun( void )        {  std::cout << "onRun called on 'TestSimpleScxmlFSM'" << std::endl; }
+  void onRun( void )        {  std::cout << "onRun called on 'TestSimpleScxmlFSM'" << std::endl; mCompareState = 1;}
+
+private:
+  int mCompareState;
 
 };
 

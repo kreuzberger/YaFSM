@@ -14,7 +14,7 @@ class QTestSimpleFSM: public QObject, public ISimpleFSMActionHandler
   : mSimpleFSM(this)
   {
     mSimpleFSM.initFSM();
-  };
+  }
 
   private slots:
     void initTestCase() {}

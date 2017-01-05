@@ -8,10 +8,11 @@ set( DESIRED_QT_VERSION 4)
 
 INCLUDE (${CMAKE_ROOT}/Modules/FindQt.cmake)
 #INCLUDE_DIRECTORIES( ${QT_INCLUDE_DIR} )
-if( CMAKE_HOST_UNIX )
+if( UNIX )
   include_directories(/usr/include)
-else( CMAKE_HOST_UNIX )
-endif( CMAKE_HOST_UNIX )
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wall -Woverloaded-virtual")
+else( )
+endif( )
 
 
 enable_testing()
