@@ -231,6 +231,15 @@ sub outFSMHeader
     print $fh ("#include \"" . $YaFsmScxmlParser::gFSMDataModel{headerfile} . "\"\n");
   }
 
+  foreach my $member ( @YaFsmScxmlParser::gFSMMembers )
+  {
+    if ($member->{src})
+    {
+      print $fh ("#include \"" . $member->{src} . "\"\n");
+
+    }
+  }
+
   print $fh "#include \"IFSMTimerCB.h\"\n";
   print $fh "#include \"IFSMTimer.h\"\n";
   print $fh "#include \"FSMTimer.h\"\n";
@@ -276,6 +285,17 @@ sub outFSMHeader
   print $fh "  , mbInit( false )\n";
   print $fh "  , mFSMTimer( self() )\n";
   print $fh "  , mFSMEvent( self() )\n";
+  foreach my $member ( @YaFsmScxmlParser::gFSMMembers )
+  {
+    if ($member->{src})
+    {
+      print $fh "  , $member->{id}()\n";
+    }
+    elsif ( $member->{expr} )
+    {
+      print $fh "  , $member->{id}($member->{expr})\n";
+    }
+  }
   print $fh "  {\n";
   my $fsm = \%YaFsmScxmlParser::gFSM;
 
@@ -297,9 +317,9 @@ sub outFSMHeader
      print $fh '    setTimerID(' . uc("TIMER_".$key) .", " . $YaFsmScxmlParser::gFSMTimers{$key}{ms} .", " . $YaFsmScxmlParser::gFSMTimers{$key}{cnt}. ");\n";
   }
 
-  foreach my $events (@YaFsmScxmlParser::gFSMEvents)
+  foreach my $key (keys %{$YaFsmScxmlParser::gFSMEvents})
   {
-    print $fh '    registerEventID(' . uc("EVENT_".$events) . ");\n";
+    print $fh '    registerEventID(' . uc("EVENT_".$key) . ");\n";
   }
 
   YaFsm::printDbg("get default enter state name for mpoCurrentState");
@@ -395,15 +415,15 @@ sub outFSMHeader
   print $fh "  enum " . uc($FSMName) . "EVENT\n";
   print $fh "  {\n";
   $enumIdx = 0;
-  foreach my $event ( @YaFsmScxmlParser::gFSMEvents)
+  foreach my $key (keys(%{$YaFsmScxmlParser::gFSMEvents}))
   {
     if(0 == $enumIdx)
     {
-      print $fh "    " . uc("EVENT_".$event)."=1,\n";
+      print $fh "    " . uc("EVENT_".$key)."=1,\n";
     }
     else
     {
-      print $fh "    " . uc("EVENT_".$event).",\n";
+      print $fh "    " . uc("EVENT_".$key).",\n";
     }
     $enumIdx++;
   }
@@ -437,6 +457,14 @@ sub outFSMHeader
   print $fh "  bool mbInit;\n";
   print $fh "  FSMTimer mFSMTimer;\n";
   print $fh "  FSMEvent mFSMEvent;\n";
+  foreach my $member ( @YaFsmScxmlParser::gFSMMembers )
+  {
+    if ($member->{src})
+    {
+        print $fh "  member->{classname}  member->{id};\n";
+
+    }
+  }
   print $fh "\n";
   print $fh "};\n";
   print $fh "\n";
@@ -571,13 +599,13 @@ sub outFSMHeader
   print $fh "{\n";
   print $fh "  (void) iEventID;\n";
 
-  if(@YaFsmScxmlParser::gFSMEvents)
+  if(%YaFsmScxmlParser::gFSMEvents)
   {
     # definition of all timers as enumeration
     print $fh "\n";
     print $fh "  switch(iEventID)\n";
     print $fh "  {\n";
-    foreach my $key ( @YaFsmScxmlParser::gFSMEvents )
+    foreach my $key ( keys %{$YaFsmScxmlParser::gFSMEvents} )
     {
       YaFsm::printDbg("events: $key ");
       print $fh "  case " . uc("EVENT_".$key).":\n";

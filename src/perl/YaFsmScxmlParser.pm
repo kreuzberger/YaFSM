@@ -46,7 +46,7 @@ our %gFSMActions;
 our %gFSMTriggers;
 our @gFSMStates;
 our %gFSMTimers;
-our @gFSMEvents;
+our %gFSMEvents;
 our $gFSM;
 our $gFSMName;
 our %gFSMMembers;
@@ -432,6 +432,11 @@ sub parseFSM
       {
         push(@{$gFSMActions{$state->{id}}}, { type => "transition", name => "transition_$state->{id}_$trans->{event}_$transIdx", script => scriptCodeToArray($trans->{script}), source => $state->{id}, event => $trans->{event} } )  ;
       }
+      if (  $trans->{raise} )
+      {
+        $gFSMEvents{$trans->{raise}}= 1;
+      }
+
 
       $transIdx++;
 
@@ -442,7 +447,10 @@ sub parseFSM
       if( %gFSMDataModel && $state->{onentry}{script} )
       {
         push(@{$gFSMActions{$state->{id}}}, { type => "onentry", name => "$state->{id}_onEntry", script => scriptCodeToArray($state->{onentry}{script}), source => $state->{id} } )  ;
-
+      }
+      if ( $state->{onentry}{raise} )
+      {
+          $gFSMEvents{$state->{onentry}{raise}} = 1;
       }
     }
 
@@ -451,6 +459,10 @@ sub parseFSM
       if( %gFSMDataModel && $state->{onexit}{script} )
       {
         push(@{$gFSMActions{$state->{id}}}, { type => "onexit", name => "$state->{id}_onExit", script => scriptCodeToArray($state->{onexit}{script}), source => $state->{id} } )  ;
+      }
+      if ( $state->{onexit}{raise} )
+      {
+          $gFSMEvents{$state->{onexit}{raise}} = 1;
       }
     }
 
@@ -521,11 +533,19 @@ sub parseDefinitions
       foreach my $data (@{$currRef->{datamodel}[1]{data}})
       {
         #YaFsm::printDbg("data:  $data->{id} $data->{expr}");
-        if ($data->{src})
+        if ( $data->{expr} )
         {
-          YaFsm::printFatal("data type src not supported");
+          $gFSMMembers{$data->{id}}= { expr => $data->{expr}} ;
         }
-        $gFSMMembers{$data->{id}}= { init => $data->{expr}} ;
+        elsif ($data->{src})
+        {
+          my @memberInfo = split(/:/,$data->{src});
+
+          if($#memberInfo == 1 )
+          {
+            $gFSMMembers{$data->{id}}= { classname => $memberInfo[0], src => $memberInfo[1] } ;
+          }
+        }
       }
     }
   }
