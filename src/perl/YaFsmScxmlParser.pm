@@ -430,7 +430,7 @@ sub parseFSM
       $trans->{source} = $state->{id};
       if(%gFSMDataModel && $trans->{script})
       {
-        push(@{$gFSMActions{$state->{id}}}, { type => "transition", name => "transition_$state->{id}_$trans->{event}_$transIdx", script => scriptCodeToArray($trans->{script}), source => $state->{id} } )  ;
+        push(@{$gFSMActions{$state->{id}}}, { type => "transition", name => "transition_$state->{id}_$trans->{event}_$transIdx", script => scriptCodeToArray($trans->{script}), source => $state->{id}, event => $trans->{event} } )  ;
       }
 
       $transIdx++;

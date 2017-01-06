@@ -2,13 +2,14 @@
 #define SIMPLESCXMLFSMDATAMODEL_H
 
 #include <iostream>
+#include <map>
 
 class run
 {
 
 public:
   std::string name;
-  std::string data;
+  std::map<std::string, std::string> data;
 };
 
 class end

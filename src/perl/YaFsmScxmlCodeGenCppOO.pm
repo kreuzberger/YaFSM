@@ -858,7 +858,15 @@ sub genStateImpl
         {
           if( %YaFsmScxmlParser::gFSMDataModel )
           {
-            print $fhH "  void $action->{name}( " .  $YaFsmScxmlParser::gFSMDataModel{classname} . "& model );\n";
+            if( $action->{event} )
+            {
+              print $fhH "  void $action->{name}( " .  $YaFsmScxmlParser::gFSMDataModel{classname} . "& model, const $action->{event} ". "& _event );\n";
+            }
+            else
+            {
+              print $fhH "  void $action->{name}( " .  $YaFsmScxmlParser::gFSMDataModel{classname} . "& model );\n";
+            }
+
           }
           else
           {
@@ -896,7 +904,14 @@ sub genStateImpl
         {
           if( %YaFsmScxmlParser::gFSMDataModel )
           {
-            print $fhS "void State".$state->{id}."::$action->{name}( " .  $YaFsmScxmlParser::gFSMDataModel{classname} . "& model )\n";
+            if( $action->{event} )
+            {
+              print $fhS "void State".$state->{id}."::$action->{name}( " .  $YaFsmScxmlParser::gFSMDataModel{classname} . "& model, const $action->{event} " . "& _event )\n";
+            }
+            else
+            {
+              print $fhS "void State".$state->{id}."::$action->{name}( " .  $YaFsmScxmlParser::gFSMDataModel{classname} . "& model )\n";
+            }
           }
           else
           {
@@ -1018,7 +1033,7 @@ sub genStateImpl
       print $fhS "{\n";
 
     }
-    print $fhS "};\n\n";
+    print $fhS "}\n\n";
 
     #print $fh "}>\n";
 
@@ -1080,7 +1095,7 @@ sub genStateTransImpl
 
             if(YaFsmScxmlParser::hasTransitionActions($transArray[$nextIdx]))
             {
-              print $fhS ( "    transition_" . $transArray[$nextIdx]->{source} . "_" . $transArray[$nextIdx]->{event} . "_$idx(fsmImpl.model());\n" );
+              print $fhS ( "    transition_" . $transArray[$nextIdx]->{source} . "_" . $transArray[$nextIdx]->{event} . "_$idx(fsmImpl.model(), _event);\n" );
             }
             if(YaFsmScxmlParser::hasTransitionEvents($transArray[$nextIdx]))
             {
