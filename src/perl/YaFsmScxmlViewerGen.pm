@@ -434,11 +434,11 @@ sub genDotFile
             print $fh "(" . YaFsm::xmlEscape($YaFsmScxmlParser::gFSMTriggers{$trans->{event}}) .")";
             print $fhWallpaper "(" . YaFsm::xmlEscape($YaFsmScxmlParser::gFSMTriggers{$trans->{event}}).")";
           }
-          if($trans->{condition})
+          if($trans->{cond})
           {
             # add some extra space to get a better layout (egdge labes are not distored)
-            print $fh " [" . YaFsm::xmlEscape($trans->{condition}) ."]     ";
-            print $fhWallpaper " [" . YaFsm::xmlEscape($trans->{condition}) ."]     ";
+            print $fh " [" . YaFsm::xmlEscape($trans->{cond}) ."]     ";
+            print $fhWallpaper " [" . YaFsm::xmlEscape($trans->{cond}) ."]     ";
           }
           print $fh "<br/>";
           print $fhWallpaper "<br/>";
@@ -562,6 +562,8 @@ sub genDscFile
   my $stateLevel = shift;
   my $fh;
   my $fileBasename=$filename;
+  my $strStates;
+  my $strTransitions;
 
 
   #chdir($YaFsmScxmlParser::gFSMViewOutPath);
@@ -615,13 +617,13 @@ sub genDscFile
 #    enter;
 #    exit;
 
-    print $fh "states;\n";
+    $strStates .= "states;\n";
     foreach my $state (@{$currRef->{state}})
     {
-      print $fh "  $state->{id};\n";
+      $strStates .= "  $state->{id};\n";
       if(YaFsmScxmlParser::hasStateActions($state))
       {
-        print $fh "    enter;\n";
+        $strStates .= "    enter;\n";
         if(YaFsmScxmlParser::hasStateEnterActions($state))
         {
           if(defined $state->{onenter} && defined $state->{onenter}{script})
@@ -630,7 +632,7 @@ sub genDscFile
 
             foreach(@actionArray)
             {
-              print $fh "      action;$_\n" ;
+              $strStates .= "      script;$_\n" ;
             }
           }
 
@@ -639,7 +641,7 @@ sub genDscFile
             my @actionArray= split(';',$state->{tstartenter});
             foreach(@actionArray)
             {
-              print $fh "      startTimer;$_\n" ;
+              $strStates .= "      startTimer;$_\n" ;
             }
           }
 
@@ -648,13 +650,13 @@ sub genDscFile
             my @actionArray= split(';',$state->{tstopenter});
             foreach(@actionArray)
             {
-              print $fh "      stopTimer;$_\n" ;
+              $strStates .= "      stopTimer;$_\n" ;
             }
           }
 
         }
 
-        print $fh "    exit;\n";
+        $strStates .= "    exit;\n";
         if(YaFsmScxmlParser::hasStateExitActions($state))
         {
           if(defined $state->{onexit} && defined $state->{onexit}{script})
@@ -663,7 +665,7 @@ sub genDscFile
 
             foreach(@actionArray)
             {
-              print $fh "      action;$_\n" ;
+              $strStates .= "      script;$_\n" ;
             }
           }
 
@@ -672,7 +674,7 @@ sub genDscFile
             my @actionArray= split(';',$state->{tstartexit});
             foreach(@actionArray)
             {
-              print $fh "      startTimer;$_\n" ;
+              $strStates .= "      startTimer;$_\n" ;
             }
           }
 
@@ -681,22 +683,21 @@ sub genDscFile
             my @actionArray= split(';',$state->{tstopexit});
             foreach(@actionArray)
             {
-              print $fh "      stopTimer;$_\n" ;
+              $strStates .= "      stopTimer;$_\n" ;
             }
           }
 
         }
       }
 
-      print $fh "transitions;\n";
       foreach my $trans (@{$state->{transition}})
       {
         if($trans->{event})
         {
-          print $fh "  $trans->{event};\n";
-          print $fh "    begin;$trans->{source};\n";
-          print $fh "    end;$trans->{target}\n";
-          print $fh "    condition;$trans->{condition}\n" if($trans->{condition});
+          $strTransitions .= "  $trans->{event};\n";
+          $strTransitions .= "    source;$state->{id};\n";
+          $strTransitions .= "    target;$trans->{target}\n";
+          $strTransitions .= "    cond;$trans->{cond}\n" if($trans->{cond});
           if(defined YaFsmScxmlParser::hasTransitionActions($trans))
           {
             if(defined $trans->{script} )
@@ -705,16 +706,21 @@ sub genDscFile
 
               foreach(@actionArray)
               {
-                print $fh "      action;$_\n" ;
+                $strTransitions .= "      script;$_\n" ;
               }
             }
           }
-          print $fh "    event;$trans->{event}\n" if(YaFsmScxmlParser::hasTransitionEvents($trans));
+          $strTransitions .= "    event;$trans->{event}\n" if(YaFsmScxmlParser::hasTransitionEvents($trans));
         }
       }
 
-
     }
+
+    print $fh $strStates;
+    print $fh "transitions;\n";
+
+    print $fh $strTransitions;
+
 
     if( 0 == $stateLevel )
     {
@@ -735,6 +741,7 @@ sub genDscFile
 
 
     }
+
 
     close($fh);
   }
