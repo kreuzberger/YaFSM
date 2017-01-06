@@ -161,8 +161,6 @@ sub genDotFile
       {
         if( ref($currRef->{initial}{transition}) eq 'ARRAY')
         {
-          print Dumper($currRef->{initial});
-          print("------------------->\n");
           my $enterStateName = $currRef->{initial}{transition}[0]{target};
           print $fh "  $currRef->{id}"."_entry -> $enterStateName\n";
           print $fhWallpaper "  $currRef->{id}"."_entry -> $enterStateName\n";
@@ -198,9 +196,9 @@ sub genDotFile
           print $fh "<TR><TD>";
           print $fhWallpaper "<TR><TD>";
 
-          if(defined $state->{enter})
+          if(defined $state->{onentry} && defined $state->{onentry}{script})
           {
-            my @list = split(';',$state->{enter});
+            my @list = YaFsmScxmlParser::scriptCodeToArray($state->{onentry}{script});
             foreach (@list)
             {
               if($gUseImages)
@@ -296,9 +294,10 @@ sub genDotFile
           print $fh "<TR><TD>";
           print $fhWallpaper "<TR><TD>";
 
-          if(defined $state->{exit})
+          if(defined $state->{onexit} && defined $state->{onexit}{script})
           {
-            my @list = split(';',$state->{exit});
+            my @list = YaFsmScxmlParser::scriptCodeToArray($state->{onexit}{script});
+
             foreach (@list)
             {
               if($gUseImages)
@@ -446,9 +445,11 @@ sub genDotFile
 
           if(YaFsmScxmlParser::hasTransitionActions($trans))
           {
-            if(length($trans->{action}))
+
+            if(defined $trans->{script} )
             {
-              my @actionArray = split(/;/,$trans->{action});
+              my @actionArray = YaFsmScxmlParser::scriptCodeToArray($trans->{script});
+
               print $fh "<FONT color=\"grey\">";
               print $fhWallpaper "<FONT color=\"grey\">";
               foreach(@actionArray)
@@ -623,9 +624,10 @@ sub genDscFile
         print $fh "    enter;\n";
         if(YaFsmScxmlParser::hasStateEnterActions($state))
         {
-          if(defined $state->{enter})
+          if(defined $state->{onenter} && defined $state->{onenter}{script})
           {
-            my @actionArray= split(';',$state->{enter});
+            my @actionArray = YaFsmScxmlParser::scriptCodeToArray($state->{onenter}{script});
+
             foreach(@actionArray)
             {
               print $fh "      action;$_\n" ;
@@ -655,9 +657,10 @@ sub genDscFile
         print $fh "    exit;\n";
         if(YaFsmScxmlParser::hasStateExitActions($state))
         {
-          if(defined $state->{exit})
+          if(defined $state->{onexit} && defined $state->{onexit}{script})
           {
-            my @actionArray= split(';',$state->{exit});
+            my @actionArray = YaFsmScxmlParser::scriptCodeToArray($state->{onexit}{script});
+
             foreach(@actionArray)
             {
               print $fh "      action;$_\n" ;
@@ -696,9 +699,10 @@ sub genDscFile
           print $fh "    condition;$trans->{condition}\n" if($trans->{condition});
           if(defined YaFsmScxmlParser::hasTransitionActions($trans))
           {
-            if(defined $trans->{action})
+            if(defined $trans->{script} )
             {
-              my @actionArray= split(';',$trans->{action});
+              my @actionArray = YaFsmScxmlParser::scriptCodeToArray($trans->{script});
+
               foreach(@actionArray)
               {
                 print $fh "      action;$_\n" ;
