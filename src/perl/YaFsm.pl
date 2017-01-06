@@ -69,6 +69,11 @@ if($optOk)
       $YaFsmScxmlParser::gFSMFileName = $gFSMFileName;
       $YaFsmScxmlParser::gFSMGenCode = $gFSMGenCode;
       $YaFsmScxmlParser::gFSMCodeOutPath = $gFSMCodeOutPath;
+
+      $YaFsmScxmlParser::gFSMGenView = $gFSMGenView;
+      $YaFsmScxmlParser::gFSMGenDotType = $gFSMGenDotType;
+      $YaFsmScxmlParser::gFSMViewOutPath = $gFSMViewOutPath;
+
       YaFsmScxmlParser::init($gFSMFileName);
       YaFsmScxmlParser::readFSM($gFSMFileName);
     }

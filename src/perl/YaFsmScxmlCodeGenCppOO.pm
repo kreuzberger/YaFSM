@@ -201,14 +201,12 @@ sub printTriggerImpl
   print $fh "      }\n";
   print $fh "      else\n";
   print $fh "      {\n";
-  print $fh "        TraceScope( ". lc($FSMName) ."_state )\n";
-  print $fh "        TraceError( \"forbidden call to trigger ". $key . " from action\" )\n";
+  print $fh "        std::cerr << ( \"forbidden call to trigger ". $key . " from action\" ) << std::endl;\n";
   print $fh "      }\n";
   print $fh "    }\n";
   print $fh "    else\n";
   print $fh "    {\n";
-  print $fh "      TraceScope( ". lc($FSMName) ."_state )\n";
-  print $fh "      TraceError( \"call to trigger ". $key . " before initFSM()\" )\n";
+  print $fh "      std::cerr << ( \"call to trigger ". $key . " before initFSM()\" ) << std::endl;\n";
   print $fh "    }\n";
 
   print $fh "  }\n";
@@ -240,29 +238,6 @@ sub outFSMHeader
   print $fh "#include \"IFSMEvent.h\"\n";
   print $fh "#include \"FSMEvent.h\"\n";
 
-  print $fh "\n";
-
-  print $fh '#ifdef USE_TRACE'. "\n";
-  print $fh '#include "Trace.h"' ."\n";
-  print $fh '#else' ."\n";
-  print $fh '#ifdef USE_TRACECONSOLE' . "\n";
-  print $fh '#ifndef TraceScope' ."\n";
-  print $fh "#define TraceScope(x) std::cout << \"--> \" << #x << std::endl;\n";
-  print $fh "#define TraceDbg1(x) std::cout << x << std::endl;\n";
-  print $fh "#define TraceWarn(x) std::cout << x << std::endl;\n";
-  print $fh "#define TraceError(x) std::cerr << x << std::endl;\n";
-  print $fh "#define TraceInit(x)\n";
-  print $fh '#endif' ."\n";
-  print $fh '#else' ."\n";
-  print $fh '#ifndef TraceScope' ."\n";
-  print $fh "#define TraceScope(x)\n";
-  print $fh "#define TraceDbg1(x)\n";
-  print $fh "#define TraceWarn(x)\n";
-  print $fh "#define TraceError(x)\n";
-  print $fh "#define TraceInit(x)\n";
-  print $fh '#endif' ."\n";
-  print $fh '#endif' ."\n";
-  print $fh '#endif' ."\n";
   print $fh "\n";
   print $fh "\n";
 
@@ -483,8 +458,6 @@ sub outFSMHeader
   print $fh "inline void " . $FSMName . "::setTransByName( const std::string& name)\n";
   print $fh "{\n";
   print $fh "  // set transitions by names\n";
-  print $fh "  TraceScope( ". lc($FSMName) ."_state )\n";
-  print $fh "  TraceDbg1( (\"transition \" + name).c_str())\n";
   print $fh "  if (moTransCoverageMap.end() != moTransCoverageMap.find(name) )\n";
   print $fh "  {\n";
   print $fh "    moTransCoverageMap[name] = moTransCoverageMap[name] + 1;\n";
@@ -499,15 +472,11 @@ sub outFSMHeader
   print $fh "\n";
   print $fh "inline void " . $FSMName . "::enterCurrentState()\n";
   print $fh "{\n";
-  print $fh "  TraceScope( ". lc($FSMName) ."_state )\n";
-  print $fh "  TraceDbg1( (\"enter state \" + mpoCurrentState->getStateName()).c_str())\n";
   print $fh "  mpoCurrentState->enter(self());\n";
   print $fh "}\n";
   print $fh "\n";
   print $fh "inline void " . $FSMName . "::exitState( const std::string& name )\n";
   print $fh "{\n";
-  print $fh "  TraceScope( ". lc($FSMName) ."_state )\n";
-  print $fh "  TraceDbg1( (\"exit state \" + name).c_str())\n";
   print $fh "  moStateMap[name]->exit(self());\n";
   print $fh "}\n\n";
   print $fh "inline bool " . $FSMName . "::isLocked( void )\n";
@@ -531,14 +500,13 @@ sub outFSMHeader
   print $fh "\n";
   print $fh "inline void " . $FSMName . "::setTimerID( int iTimerID, int iTimeoutMs, int iRepeatCnt )\n";
   print $fh "{\n";
-  print $fh "  TraceScope( ". lc($FSMName) ."_timer )\n";
   print $fh "  if( !isInitialised() )\n";
   print $fh "  {\n";
   print $fh "    mFSMTimer.setTimerID( iTimerID, iTimeoutMs, iRepeatCnt );\n";
   print $fh "  }\n";
   print $fh "  else\n";
   print $fh "  {\n";
-  print $fh "    TraceError( \"forbidden call to setTimerID after call to initFSM()\" )\n";
+  print $fh "    std::cerr << ( \"forbidden call to setTimerID after call to initFSM()\" ) << std::endl;\n";
   print $fh "  }\n";
   print $fh "}\n";
   print $fh "inline void " . $FSMName . "::stopTimerID( int iTimerID )\n";
@@ -555,8 +523,6 @@ sub outFSMHeader
   print $fh "inline void " . $FSMName . "::processTimerEventID( int iTimerID )\n";
   print $fh "{\n";
 # definition of all timers as enumeration
-  print $fh "  TraceScope( ". lc($FSMName) ."_timer )\n";
-  print $fh "  std::ostringstream stream;";
   print $fh "  (void) iTimerID;\n\n";
 
   if(%YaFsmScxmlParser::gFSMTimers)
@@ -575,16 +541,13 @@ sub outFSMHeader
         #if ( $value )
         {
           print $fh "  case " . uc("TIMER_".$key).":\n";
-          print $fh "    stream << \"processing timer \" << \"$key\";\n";
-          print $fh "    TraceDbg1( stream.str().c_str() )\n";
           print $fh "    timer" . $key ."();\n";
           print $fh "  break;\n";
         }
       }
 
       print $fh "  default:\n";
-      print $fh "    stream << \"TimerID \" << iTimerID << \" not handled\";\n";
-      print $fh "    TraceError( stream.str().c_str() )\n";
+      print $fh "    std::cerr << \"TimerID \" << iTimerID << \" not handled\" << std::endl;\n";
       print $fh "  break;\n";
       print $fh "  }\n";
     }
@@ -595,28 +558,17 @@ sub outFSMHeader
 
   print $fh "inline void " . $FSMName . "::registerEventID( int iEventID )\n";
   print $fh "{\n";
-  print $fh "  TraceScope( ". lc($FSMName) ."_event )\n";
-  print $fh "  std::ostringstream stream;\n";
-  print $fh "  stream << \"register EventID \" << iEventID;\n";
-  print $fh "  TraceDbg1( stream.str().c_str() )\n";
-
   print $fh "  mFSMEvent.registerEventID( iEventID );\n";
   print $fh "}\n";
 
   print $fh "inline void " . $FSMName . "::sendEventID( int iEventID )\n";
   print $fh "{\n";
-  print $fh "  TraceScope( ". lc($FSMName) ."_event )\n";
-  print $fh "  std::ostringstream stream;\n";
-  print $fh "  stream << \"send EventID \" << iEventID;\n";
-  print $fh "  TraceDbg1( stream.str().c_str() )\n";
   print $fh "  mFSMEvent.sendEventID( iEventID );\n";
   print $fh "}\n";
   print $fh "\n";
 
   print $fh "inline void " . $FSMName . "::processEventID( int iEventID )\n";
   print $fh "{\n";
-  print $fh "  TraceScope( ". lc($FSMName) ."_event )\n";
-  print $fh "  std::ostringstream stream;\n";
   print $fh "  (void) iEventID;\n";
 
   if(@YaFsmScxmlParser::gFSMEvents)
@@ -629,15 +581,11 @@ sub outFSMHeader
     {
       YaFsm::printDbg("events: $key ");
       print $fh "  case " . uc("EVENT_".$key).":\n";
-      print $fh "    stream << \"processing event \" << \"$key\";\n";
-      print $fh "    TraceDbg1( stream.str().c_str() )\n";
       print $fh "    event" . $key ."();\n";
       print $fh "  break;\n";
     }
 
     print $fh "  default:\n";
-    print $fh "    stream << \"EventID \" << iEventID << \" not handled\";\n";
-    print $fh "    TraceError( stream.str().c_str() )\n";
     print $fh "  break;\n";
     print $fh "  }\n";
   }
@@ -657,15 +605,13 @@ sub outFSMHeader
   print $fh "\n";
   print $fh "inline void " . $FSMName . "::dumpCoverage( void ) const\n";
   print $fh "{\n";
-  print $fh "  TraceScope( ". lc($FSMName) ." )\n";
-  print $fh "  std::ostringstream stream;\n";
   print $fh "  int iStatesCovered = 0;\n";
   print $fh "  int iTransCovered = 0;\n";
-  print $fh "  stream << std::endl << \"Dumping coverage information:\" << std::endl;\n";
+  print $fh "  std::cout << std::endl << \"Dumping coverage information:\" << std::endl;\n";
   print $fh "  std::map<std::string, int>::const_iterator it;\n";
   print $fh "  for(it = moStateCoverageMap.begin(); it != moStateCoverageMap.end(); ++it)\n";
   print $fh "  {\n";
-  print $fh "    stream << \"  state\" << it->first << \" covered \"<< it->second << \" times\" << std::endl;\n";
+  print $fh "    std::cout << \"  state\" << it->first << \" covered \"<< it->second << \" times\" << std::endl;\n";
   print $fh "    if(0 < it->second)\n";
   print $fh "    {\n";
   print $fh "      iStatesCovered++;\n";
@@ -674,20 +620,19 @@ sub outFSMHeader
 
   print $fh "  for(it = moTransCoverageMap.begin(); it != moTransCoverageMap.end(); ++it)\n";
   print $fh "  {\n";
-  print $fh "    stream << \"  transition \" << it->first << \" covered \"<< it->second << \" times\" << std::endl;\n";
+  print $fh "    std::cout << \"  transition \" << it->first << \" covered \"<< it->second << \" times\" << std::endl;\n";
   print $fh "    if(0 < it->second)\n";
   print $fh "    {\n";
   print $fh "      iTransCovered++;\n";
   print $fh "    }\n";
   print $fh "  }\n";
 
-  print $fh "  stream << std::endl << \"  total coverage:\" << std::endl;\n";
-  print $fh "  stream << \"  States covered: \" << iStatesCovered << \" out of \"<< moStateCoverageMap.size() << \", \";\n";
-  print $fh "  stream << (static_cast<size_t>(iStatesCovered)*1.0) / (1.0*moStateCoverageMap.size()) * 100.0 << \" percent\" << std::endl;\n";
-  print $fh "  stream << \"  Transitions covered: \" << iTransCovered << \" out of \"<< moTransCoverageMap.size() << \", \";\n";
-  print $fh "  stream << (static_cast<size_t>(iTransCovered)*1.0) / (1.0*moTransCoverageMap.size()) * 100.0 << \" percent\" << std::endl;\n";
+  print $fh "  std::cout << std::endl << \"  total coverage:\" << std::endl;\n";
+  print $fh "  std::cout << \"  States covered: \" << iStatesCovered << \" out of \"<< moStateCoverageMap.size() << \", \";\n";
+  print $fh "  std::cout << (static_cast<size_t>(iStatesCovered)*1.0) / (1.0*moStateCoverageMap.size()) * 100.0 << \" percent\" << std::endl;\n";
+  print $fh "  std::cout << \"  Transitions covered: \" << iTransCovered << \" out of \"<< moTransCoverageMap.size() << \", \";\n";
+  print $fh "  std::cout << (static_cast<size_t>(iTransCovered)*1.0) / (1.0*moTransCoverageMap.size()) * 100.0 << \" percent\" << std::endl;\n";
 
-  print $fh "  TraceDbg1( stream.str().c_str() )\n";
   print $fh "  \n";
   print $fh "  \n";
   print $fh "  \n";
@@ -724,29 +669,6 @@ sub outFSMStateBaseHeader
 
 
   print $fh "\n";
-
-  print $fh '#ifdef USE_TRACE'. "\n";
-  print $fh '#include "Trace.h"' ."\n";
-  print $fh '#else' ."\n";
-  print $fh '#ifdef USE_TRACECONSOLE' . "\n";
-  print $fh '#ifndef TraceScope' ."\n";
-  print $fh "#define TraceScope(x) std::cout << \"--> \" << #x << std::endl;\n";
-  print $fh "#define TraceDbg1(x) std::cout << x << std::endl;\n";
-  print $fh "#define TraceWarn(x) std::cout << x << std::endl;\n";
-  print $fh "#define TraceError(x) std::cerr << x << std::endl;\n";
-  print $fh "#define TraceInit(x)\n";
-  print $fh '#endif' ."\n";
-  print $fh '#else' ."\n";
-  print $fh '#ifndef TraceScope' ."\n";
-  print $fh "#define TraceScope(x)\n";
-  print $fh "#define TraceDbg1(x)\n";
-  print $fh "#define TraceWarn(x)\n";
-  print $fh "#define TraceError(x)\n";
-  print $fh "#define TraceInit(x)\n";
-  print $fh '#endif' ."\n";
-  print $fh '#endif' ."\n";
-  print $fh '#endif' ."\n";
-  print $fh "\n";
   print $fh "\n";
 
   print $fh "class " . $FSMName . "StateBase: public I" . $FSMName . "State\n";
@@ -774,8 +696,6 @@ sub outFSMStateBaseHeader
     #YaFsm::printDbg("trigger: $key ( $value )");
     print $fh "  inline virtual void send_$key( " . $FSMName . "&, const $key". "& _event)\n";
     print $fh "  {\n";
-    print $fh "     TraceScope( ". lc($FSMName) ."_trigger )\n";
-    print $fh "     TraceDbg1( (\"trigger $key not handled in state \" + mStateName).c_str() )\n";
     print $fh "  }\n";
   }
 

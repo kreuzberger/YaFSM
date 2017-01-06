@@ -7,6 +7,7 @@ use File::Path;
 use File::Basename;
 use File::Copy;
 use YaFsmCodeGen;
+use YaFsmScxmlViewerGen;
 use FindBin;
 
 
@@ -36,6 +37,11 @@ our @EXPORT_OK;
 our $gFSMFileName;
 our $gFSMGenCode=0;
 our $gFSMCodeOutPath;
+
+our $gFSMGenView=0;
+our $gFSMGenDotType='svg';
+our $gFSMViewOutPath;
+
 our %gFSMActions;
 our %gFSMTriggers;
 our @gFSMStates;
@@ -77,6 +83,24 @@ sub init
   {
     mkpath( $gFSMCodeOutPath, {verbose => 1, mode => 0755}) if (!(-d $gFSMCodeOutPath));
   }
+
+  if($gFSMGenView && (defined $gFSMViewOutPath))
+  {
+    mkpath( $gFSMViewOutPath, {verbose => 1, mode => 0755}) if (!(-d $gFSMViewOutPath));
+    my $imageOutPath = $gFSMViewOutPath . '/images';
+
+    mkpath( $imageOutPath, {verbose => 1, mode => 0755}) if (!(-d $imageOutPath));
+
+    my $imageInPath = $FindBin::Bin .'/images';
+    foreach my $img (@gDotImages)
+    {
+      if(!copy("$imageInPath/$img", "$imageOutPath/$img"))
+      {
+        YaFsm::printFatal("$imageInPath/$img -> $imageOutPath/$img: $!");
+      }
+    }
+  }
+
 #  $YaFsm::gVerbose=1;
 }
 
@@ -147,14 +171,35 @@ sub readFSM
         YaFsm::printDbg("parsing Definitons (datamodel) ");
         parseDefinitions($gFSM);# if $YaFsm::gVerbose;
         YaFsm::printDbg("parsing FSM");
-
+        if ($gFSMGenView)
+        {
+          # clean dot wallpaper filename
+          my $outWallpaperFilePath = $gFSMViewOutPath . '/wallpaper.dot';
+          open(FH,">$outWallpaperFilePath") || die "cannot open $outWallpaperFilePath for cleaning\n";
+          print FH "digraph G {\n";
+          print FH " compound=true;\n";
+          close(FH);
+        }
 
         parseFSM($gFSM,"root");# if $YaFsm::gVerbose;
 
         YaFsm::printFatal("mismatch in state levels $gStateLevel") if $gStateLevel != -1;
 
+        YaFsmScxmlViewerGen::writeDscFile()  if( $gFSMGenView);
         # write out code files
         YaFsmCodeGen::writeCodeFiles($gFSMName, 1)  if( $gFSMGenCode);
+
+
+        if ($gFSMGenView)
+        {
+          # finalize dot wallpaper filename
+          my $outWallpaperFilePath = $gFSMViewOutPath . '/wallpaper.dot';
+          open(FH,">>$outWallpaperFilePath") || die "cannot open $outWallpaperFilePath for writing\n";
+          print FH "}\n";
+          close(FH);
+          # write out wallpaper svg file
+          YaFsmScxmlViewerGen::genDotTypeFile('wallpaper')  if( $gFSMGenView);
+        }
       }
     }
 
@@ -416,6 +461,10 @@ sub parseFSM
     }
 
   }
+
+  YaFsmScxmlViewerGen::genDotFile($parentName,$currRef, $parentParentName) if ($gFSMGenView);
+  YaFsmScxmlViewerGen::genDotTypeFile($parentName) if ($gFSMGenView);
+  YaFsmScxmlViewerGen::genDscFile($parentName,$currRef, $gStateLevel) if ($gFSMGenView);
 
 
   $gStateLevel--;
