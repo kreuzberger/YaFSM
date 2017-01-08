@@ -317,9 +317,10 @@ sub outFSMHeader
      print $fh '    setTimerID(' . uc("TIMER_".$key) .", " . $YaFsmScxmlParser::gFSMTimers{$key}{ms} .", " . $YaFsmScxmlParser::gFSMTimers{$key}{cnt}. ");\n";
   }
 
-  foreach my $key (keys %{$YaFsmScxmlParser::gFSMEvents})
+  foreach my $key (keys(%YaFsmScxmlParser::gFSMEvents))
+ # while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
   {
-    print $fh '    registerEventID(' . uc("EVENT_".$key) . ");\n";
+    print $fh '    registerEventID(' . "EVENT_" . $key . ");\n";
   }
 
   YaFsm::printDbg("get default enter state name for mpoCurrentState");
@@ -415,15 +416,17 @@ sub outFSMHeader
   print $fh "  enum " . uc($FSMName) . "EVENT\n";
   print $fh "  {\n";
   $enumIdx = 0;
-  foreach my $key (keys(%{$YaFsmScxmlParser::gFSMEvents}))
+  foreach my $key (keys(%YaFsmScxmlParser::gFSMEvents))
+ # while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
   {
+    #die("died");
     if(0 == $enumIdx)
     {
-      print $fh "    " . uc("EVENT_".$key)."=1,\n";
+      print $fh "    " . "EVENT_".$key ."=1,\n";
     }
     else
     {
-      print $fh "    " . uc("EVENT_".$key).",\n";
+      print $fh "    " . "EVENT_".$key.",\n";
     }
     $enumIdx++;
   }
@@ -605,11 +608,13 @@ sub outFSMHeader
     print $fh "\n";
     print $fh "  switch(iEventID)\n";
     print $fh "  {\n";
-    foreach my $key ( keys %{$YaFsmScxmlParser::gFSMEvents} )
+    foreach my $key (keys(%YaFsmScxmlParser::gFSMEvents))
+   # while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
     {
       YaFsm::printDbg("events: $key ");
-      print $fh "  case " . uc("EVENT_".$key).":\n";
-      print $fh "    event" . $key ."();\n";
+      print $fh "  case " . "EVENT_".$key.":\n";
+      print $fh "    $key event;\n";
+      print $fh "    sendEvent" . "(event);\n";
       print $fh "  break;\n";
     }
 
@@ -997,12 +1002,11 @@ sub genStateImpl
         print $fhS ( "  " . $state->{id} ."_onEntry(fsmImpl.model());\n" );
       }
 
-      if(defined $state->{evententer})
+      if(defined $state->{onentry}{raise})
       {
-        my @eventArray = split(/;/,$state->{evententer});
-        foreach(@eventArray)
+        foreach(@{$state->{onentry}{raise}})
         {
-          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'.uc($_).");\n";
+          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'.$_->{event}.");\n";
         }
       }
 
@@ -1045,12 +1049,11 @@ sub genStateImpl
         print $fhS ( "  " . $state->{id} . "_onExit(fsmImpl.model());\n" );
       }
 
-      if(defined $state->{eventexit})
+      if(defined $state->{onexit}{raise})
       {
-        my @eventArray = split(/;/,$state->{eventexit});
-        foreach(@eventArray)
+        foreach(@{$state->{onexit}{raise}})
         {
-          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'.uc($_).");\n";
+          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_' . $_->{event} . ");\n";
         }
       }
 
@@ -1127,10 +1130,9 @@ sub genStateTransImpl
             }
             if(YaFsmScxmlParser::hasTransitionEvents($transArray[$nextIdx]))
             {
-              my @eventArray = split(/;/,$transArray[$nextIdx]->{event});
-              foreach(@eventArray)
+              foreach(@{$transArray[$nextIdx]->{raise}})
               {
-                print $fhS "    fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'.uc($_).");\n";
+                print $fhS "    fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'. $_->{event} .");\n";
               }
               #  print $fh "<TR><TD>^$trans->{event}</TD></TR>;\n";
             }

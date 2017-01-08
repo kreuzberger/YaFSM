@@ -718,9 +718,10 @@ sub genDscFile
 
     print $fh $strStates;
     print $fh "transitions;\n";
-
-    print $fh $strTransitions;
-
+    if( $strTransitions )
+    {
+      print $fh $strTransitions;
+    }
 
     if( 0 == $stateLevel )
     {
