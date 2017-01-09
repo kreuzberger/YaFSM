@@ -45,7 +45,6 @@ our $gFSMViewOutPath;
 our %gFSMActions;
 our %gFSMTriggers;
 our @gFSMStates;
-our %gFSMTimers;
 our %gFSMEvents;
 our $gFSM;
 our $gFSMName;
@@ -57,7 +56,6 @@ our $gImageExt="png";
 our %gFSMDataModel;
 
 
-#my @gDotImages=("enter.png","exit.png","timerstart.png","timerstop.png");
 my @gDotImages=("enter.$gImageExt","exit.$gImageExt","timerstart.$gImageExt","timerstop.$gImageExt");
 
 my $gStateLevel=-1;
@@ -149,7 +147,7 @@ sub readFSM
       # force array is useful for configurations that have only one entry and are not parsed into
       # array by default. So we ensure that the buildcfg always is an array!
       #  my $xmlContent = eval{$xml->XMLin("$filename", SuppressEmpty => '',ForceArray => qr/buildcfg$/)};
-      my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => [qw(state transition final datamodel data raise send )])};
+      my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => [qw(state transition final datamodel data raise send param )])};
       #my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => qr/state$/ )};
       if ($@)
       {
@@ -434,9 +432,18 @@ sub parseFSM
       }
       if (  $trans->{raise} )
       {
-        foreach($trans->{raise})
+        foreach(@{$trans->{raise}})
         {
-          $gFSMEvents{$_->{event}}= 1;
+          $gFSMEvents{$_->{event}}= {event => $_->{event}, delay => 0};
+        }
+      }
+      if (  $trans->{send} )
+      {
+        foreach(@{$trans->{send}})
+        {
+          my $delay = 0;
+          $delay = $_->{delay} if ($_->{delay} );
+          $gFSMEvents{$_->{event}}= {event => $_->{event}, delay => $delay};
         }
       }
 
@@ -455,7 +462,18 @@ sub parseFSM
       {
         foreach (@{$state->{onentry}{raise}})
         {
-          $gFSMEvents{$_->{event}} = 1;
+          $gFSMEvents{$_->{event}} = {event => $_->{event}, delay => 0};
+        }
+      }
+      if (  $state->{onentry}{send} )
+      {
+        foreach (@{$state->{onentry}{send}})
+        {
+          my $delay = 0;
+          $delay = $_->{delay} if ($_->{delay} );
+          my @param;
+          @param = $_->{param} if ( $_->{param} );
+          $gFSMEvents{$_->{event}}= {event => $_->{event}, delay => $delay, param => @param};
         }
       }
     }
@@ -470,9 +488,21 @@ sub parseFSM
       {
         foreach($state->{onexit}{raise})
         {
-          $gFSMEvents{$_->{event}} = 1;
+          $gFSMEvents{$_->{event}} = {event => $_->{event}, delay => 0};
         }
       }
+      if (  $state->{onexit}{send} )
+      {
+        foreach (@{$state->{onexit}{send}})
+        {
+          my $delay = 0;
+          $delay = $_->{delay} if ($_->{delay} );
+          my @param;
+          @param = $_->{param} if ( $_->{param} );
+          $gFSMEvents{$_->{event}}= {event => $_->{event}, delay => $delay, param => @param};
+        }
+      }
+
     }
 
 

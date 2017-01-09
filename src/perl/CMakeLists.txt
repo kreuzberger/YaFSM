@@ -28,11 +28,15 @@ macro (FSM_GENERATE outfiles)
                 FSMTimer.cpp
                 FSMEvent.h
                 FSMEvent.cpp
+                ScxmlFSMEvent.h
+                ScxmlFSMEvent.cpp
    )
    set(fileIfc  IFSMTimer.h
                 IFSMTimerCB.h
                 IFSMEvent.h
                 IFSMEventCB.h
+                IScxmlFSMEvent.h
+                IScxmlFSMEventCB.h
    )
 
   add_custom_command( OUTPUT ${outfile}
@@ -61,7 +65,7 @@ macro (FSM_GENERATE outfiles)
 
   set( ${outfiles} ${${outfiles}} ${outfile})
   INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code )
-  QT4_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/FSMTimer.h ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/FSMEvent.h)
+  QT4_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/FSMTimer.h ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/FSMEvent.h ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/ScxmlFSMEvent.h)
  endforeach( it )
 endmacro( FSM_GENERATE )
 #endif( FSM_SRC )

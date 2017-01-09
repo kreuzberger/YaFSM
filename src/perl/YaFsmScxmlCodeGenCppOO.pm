@@ -92,44 +92,6 @@ sub outInterfaceFSMHeader
   print $fh "#define I" . uc($FSMName) . "_H\n";
   print $fh "\n";
 
-#  print $fh "//includes by xml definition\n";
-#  foreach my $file ( @YaFsmScxmlParser::gFSMIncludes )
-#  {
-#    print $fh "#include \"$file\"\n";
-#  }
-
-#  print $fh "\n";
-#  print $fh "class I" . $FSMName . "\n";
-#  print $fh "{\n";
-#  print $fh "public:\n";
-#  print $fh "  I" . $FSMName . "() {}\n";
-#  print $fh "  virtual ~I" . $FSMName . "() {}\n";
-#  print $fh "\n";
-#  print $fh "  // definition of triggers\n";
-#  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
-#  {
-#    #YaFsm::printDbg("trigger: $key ( $value )");
-#    if( !($key =~ m/^timer/) )
-#    {
-#      print $fh "public:\n";
-#    }
-#    else
-#    {
-#      print $fh "protected:\n";
-#    }
-
-#    if ( $value )
-#    {
-#      print $fh "  virtual void $key( $value ) = 0;\n";
-#    }
-#    else
-#    {
-#      print $fh "  virtual void $key( void ) = 0;\n";
-#    }
-#  }
-
- # print $fh "};\n";
- # print $fh "\n";
   print $fh "#endif\n";
   close( $fh );
 }
@@ -240,12 +202,9 @@ sub outFSMHeader
     }
   }
 
-  print $fh "#include \"IFSMTimerCB.h\"\n";
-  print $fh "#include \"IFSMTimer.h\"\n";
-  print $fh "#include \"FSMTimer.h\"\n";
-  print $fh "#include \"IFSMEventCB.h\"\n";
-  print $fh "#include \"IFSMEvent.h\"\n";
-  print $fh "#include \"FSMEvent.h\"\n";
+  print $fh "#include \"IScxmlFSMEventCB.h\"\n";
+  print $fh "#include \"IScxmlFSMEvent.h\"\n";
+  print $fh "#include \"ScxmlFSMEvent.h\"\n";
 
   print $fh "\n";
   print $fh "\n";
@@ -261,10 +220,8 @@ sub outFSMHeader
   # print $fh "#include \"ProUnit_" . $FSMName . "_.h\"\n";
 #  print $fh "\nclass " . $FSMName . ": public I" . $FSMName . "\n";
   print $fh "\nclass " . $FSMName . "\n";
-  print $fh " : public IFSMTimerCB\n";
-  print $fh " , public IFSMTimer\n";
-  print $fh " , public IFSMEventCB\n";
-  print $fh " , public IFSMEvent\n";
+  print $fh " : public IScxmlFSMEventCB\n";
+#  print $fh " , public IScxmlFSMEvent\n";
   print $fh "{\n";
   print $fh "  friend class " . $FSMName . "StateBase;\n";
 
@@ -283,7 +240,6 @@ sub outFSMHeader
   }
   print $fh "  , mbLockTrigger( false )\n";
   print $fh "  , mbInit( false )\n";
-  print $fh "  , mFSMTimer( self() )\n";
   print $fh "  , mFSMEvent( self() )\n";
   foreach my $member ( @YaFsmScxmlParser::gFSMMembers )
   {
@@ -309,19 +265,12 @@ sub outFSMHeader
   {
     print $fh '    moTransCoverageMap["' . $trans .'"] = 0' .";\n";
   }
-  #while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTimers) )
-  foreach my $key (keys(%YaFsmScxmlParser::gFSMTimers))
+ # foreach my $key (keys(%YaFsmScxmlParser::gFSMEvents))
+  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
   {
-     YaFsm::printDbg("$key => $YaFsmScxmlParser::gFSMTimers{$key}{ms}");
-     YaFsm::printDbg("$key => $YaFsmScxmlParser::gFSMTimers{$key}{cnt}");
-     print $fh '    setTimerID(' . uc("TIMER_".$key) .", " . $YaFsmScxmlParser::gFSMTimers{$key}{ms} .", " . $YaFsmScxmlParser::gFSMTimers{$key}{cnt}. ");\n";
+    print $fh '    mFSMEvent.setEventID(' . "EVENT_".$key .");\n";
   }
 
-  foreach my $key (keys(%YaFsmScxmlParser::gFSMEvents))
- # while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
-  {
-    print $fh '    registerEventID(' . "EVENT_" . $key . ");\n";
-  }
 
   YaFsm::printDbg("get default enter state name for mpoCurrentState");
   my $enterStateName = $YaFsmScxmlParser::gFSM->{initial};
@@ -340,8 +289,8 @@ sub outFSMHeader
   print $fh "\n";
 
   print $fh "  void initFSM( void );\n";
-  print $fh "  virtual void setTimerID( int iTimerId, int iTimeOutMs, int iRepeatCnt );\n";
-  print $fh "  virtual void sendEventID( int iEventId );\n";
+  print $fh "  virtual void sendEventID( int iEventId, int iDelayMs = 20 );\n";
+  print $fh "  virtual void cancelEventID( int iEventId );\n";
 
   if( %YaFsmScxmlParser::gFSMDataModel )
   {
@@ -353,15 +302,7 @@ sub outFSMHeader
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
   {
    # YaFsm::printDbg("trigger: $key ( $value )");
-    if( !($key =~ m/^timer/) )
-    {
-      print $fh "public:\n";
-    }
-    else
-    {
-      print $fh "protected:\n";
-    }
-
+    print $fh "public:\n";
     print $fh "  void sendEvent( const $key" . "& );\n";
   }
 
@@ -377,10 +318,7 @@ sub outFSMHeader
   print $fh "  void setTransByName( const std::string& name );\n";
   print $fh "  void enterCurrentState();\n";
   print $fh "  void exitState( const std::string& name );\n";
-  print $fh "  virtual void startTimerID( int iTimerId );\n";
-  print $fh "  virtual void stopTimerID( int iTimerId );\n";
   print $fh "  virtual void processTimerEventID( int iTimerId );\n";
-  print $fh "  virtual void processEventID( int iEventId );\n";
 
   print $fh "\n";
   print $fh "//todo make this private and allow test makros to access this\n";
@@ -391,31 +329,11 @@ sub outFSMHeader
   print $fh "  const std::string& getStateName() const;\n";
   print $fh "#endif\n";
 
-  print $fh "  enum " . uc($FSMName) . "TIMER\n";
-  print $fh "  {\n";
-  my $enumIdx = 0;
-  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTimers) )
-  {
-#    if ( $value )
-    {
-      if(0 == $enumIdx)
-      {
-        print $fh "    " . uc("TIMER_".$key)."=1,\n";
-      }
-      else
-      {
-        print $fh "    " . uc("TIMER_".$key).",\n";
-      }
-      $enumIdx++;
-    }
-  }
-  print $fh "  };\n";
-
   # define events enumeration
   print $fh "  public:\n";
   print $fh "  enum " . uc($FSMName) . "EVENT\n";
   print $fh "  {\n";
-  $enumIdx = 0;
+  my $enumIdx = 0;
   foreach my $key (keys(%YaFsmScxmlParser::gFSMEvents))
  # while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
   {
@@ -458,8 +376,7 @@ sub outFSMHeader
   print $fh "  std::map<std::string, int> moTransCoverageMap;\n";
   print $fh "  bool mbLockTrigger;\n";
   print $fh "  bool mbInit;\n";
-  print $fh "  FSMTimer mFSMTimer;\n";
-  print $fh "  FSMEvent mFSMEvent;\n";
+  print $fh "  ScxmlFSMEvent mFSMEvent;\n";
   foreach my $member ( @YaFsmScxmlParser::gFSMMembers )
   {
     if ($member->{src})
@@ -529,78 +446,17 @@ sub outFSMHeader
   print $fh "  enterCurrentState();\n";
   print $fh "}\n\n";
   print $fh "\n";
-  print $fh "inline void " . $FSMName . "::setTimerID( int iTimerID, int iTimeoutMs, int iRepeatCnt )\n";
+  print $fh "inline void " . $FSMName . "::sendEventID( int iEventID, int iDelayMs )\n";
   print $fh "{\n";
-  print $fh "  if( !isInitialised() )\n";
-  print $fh "  {\n";
-  print $fh "    mFSMTimer.setTimerID( iTimerID, iTimeoutMs, iRepeatCnt );\n";
-  print $fh "  }\n";
-  print $fh "  else\n";
-  print $fh "  {\n";
-  print $fh "    std::cerr << ( \"forbidden call to setTimerID after call to initFSM()\" ) << std::endl;\n";
-  print $fh "  }\n";
+  print $fh "  mFSMEvent.sendEventID( iEventID, iDelayMs );\n";
   print $fh "}\n";
-  print $fh "inline void " . $FSMName . "::stopTimerID( int iTimerID )\n";
+  print $fh "inline void " . $FSMName . "::cancelEventID( int iEventID )\n";
   print $fh "{\n";
-  #print $fh "  std::cout <<\"stopTimerID\" << std::endl;\n";
-  print $fh "  mFSMTimer.stopTimerID( iTimerID );\n";
+  print $fh "  mFSMEvent.cancelEventID( iEventID );\n";
   print $fh "}\n";
-  print $fh "inline void " . $FSMName . "::startTimerID( int iTimerID )\n";
+  print $fh "inline void " . $FSMName . "::processTimerEventID( int iEventID )\n";
   print $fh "{\n";
-  #print $fh "  std::cout <<\"startTimerID\" << std::endl;\n";
-  print $fh "  mFSMTimer.startTimerID( iTimerID );\n";
-  print $fh "}\n";
-  print $fh "\n";
-  print $fh "inline void " . $FSMName . "::processTimerEventID( int iTimerID )\n";
-  print $fh "{\n";
-# definition of all timers as enumeration
-  print $fh "  (void) iTimerID;\n\n";
-
-  if(%YaFsmScxmlParser::gFSMTimers)
-  {
-    my $numTimers = keys(%YaFsmScxmlParser::gFSMTimers);
-    if($numTimers)
-    {
-      print $fh "\n";
-      print $fh "  switch(iTimerID)\n";
-      print $fh "  {\n";
-
-      use Data::Dumper;
-      #while( my( $key, %value ) = each( %YaFsmScxmlParser::gFSMTimers) )
-      foreach my $key (keys(%YaFsmScxmlParser::gFSMTimers))
-      {
-        #if ( $value )
-        {
-          print $fh "  case " . uc("TIMER_".$key).":\n";
-          print $fh "    timer" . $key ."();\n";
-          print $fh "  break;\n";
-        }
-      }
-
-      print $fh "  default:\n";
-      print $fh "    std::cerr << \"TimerID \" << iTimerID << \" not handled\" << std::endl;\n";
-      print $fh "  break;\n";
-      print $fh "  }\n";
-    }
-  }
-
-  print $fh "}\n";
-  print $fh "\n";
-
-  print $fh "inline void " . $FSMName . "::registerEventID( int iEventID )\n";
-  print $fh "{\n";
-  print $fh "  mFSMEvent.registerEventID( iEventID );\n";
-  print $fh "}\n";
-
-  print $fh "inline void " . $FSMName . "::sendEventID( int iEventID )\n";
-  print $fh "{\n";
-  print $fh "  mFSMEvent.sendEventID( iEventID );\n";
-  print $fh "}\n";
-  print $fh "\n";
-
-  print $fh "inline void " . $FSMName . "::processEventID( int iEventID )\n";
-  print $fh "{\n";
-  print $fh "  (void) iEventID;\n";
+  # definition of all events as enumeration
 
   if(%YaFsmScxmlParser::gFSMEvents)
   {
@@ -613,8 +469,10 @@ sub outFSMHeader
     {
       YaFsm::printDbg("events: $key ");
       print $fh "  case " . "EVENT_".$key.":\n";
+      print $fh "  {\n";
       print $fh "    $key event;\n";
       print $fh "    sendEvent" . "(event);\n";
+      print $fh "  }\n";
       print $fh "  break;\n";
     }
 
@@ -625,6 +483,7 @@ sub outFSMHeader
 
   print $fh "}\n";
   print $fh "\n";
+
 
   print $fh "// declaration of all triggers\n";
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMTriggers) )
@@ -984,18 +843,10 @@ sub genStateImpl
         my @str = split(/;/,$state->{tstopenter});
         foreach(@str)
         {
-          print $fhS "  fsmImpl.stopTimerID( " . $YaFsmScxmlParser::gFSMName . "::" . uc("TIMER_" . $_) ." );\n";
+          print $fhS "  fsmImpl.stopEventID( " . $YaFsmScxmlParser::gFSMName . "::" . "EVENT_" . $_ ." );\n";
         }
       }
 
-      if(defined $state->{tstartenter})
-      {
-        my @str = split(/;/,$state->{tstartenter});
-        foreach(@str)
-        {
-          print $fhS "  fsmImpl.startTimerID( " . $YaFsmScxmlParser::gFSMName . "::" . uc("TIMER_" . $_) ." );\n";
-        }
-      }
 
       if(%YaFsmScxmlParser::gFSMDataModel && defined $state->{onentry}{script})
       {
@@ -1009,7 +860,13 @@ sub genStateImpl
           print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'.$_->{event}.");\n";
         }
       }
-
+      if(defined $state->{onentry}{send})
+      {
+        foreach(@{$state->{onentry}{send}})
+        {
+          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'.$_->{event}.");\n";
+        }
+      }
     }
 
     if( defined $enterStateName )
@@ -1031,18 +888,10 @@ sub genStateImpl
         my @str = split(/;/,$state->{tstopexit});
         foreach(@str)
         {
-          print $fhS "  fsmImpl.stopTimerID( " . $YaFsmScxmlParser::gFSMName . "::" . uc("TIMER_" . $_) ." );\n";
+          print $fhS "  fsmImpl.cancelEventID( " . $YaFsmScxmlParser::gFSMName . "::" . "EVENT_" . $_ ." );\n";
         }
       }
 
-      if(defined $state->{tstartexit})
-      {
-        my @str = split(/;/,$state->{tstartexit});
-        foreach(@str)
-        {
-          print $fhS "  fsmImpl.startTimerID( " . $YaFsmScxmlParser::gFSMName . "::" . uc("TIMER_" . $_) ." );\n";
-        }
-      }
 
       if(%YaFsmScxmlParser::gFSMDataModel && defined $state->{onexit}{script})
       {
@@ -1052,6 +901,14 @@ sub genStateImpl
       if(defined $state->{onexit}{raise})
       {
         foreach(@{$state->{onexit}{raise}})
+        {
+          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_' . $_->{event} . ");\n";
+        }
+      }
+
+      if(defined $state->{onexit}{send})
+      {
+        foreach(@{$state->{onexit}{send}})
         {
           print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_' . $_->{event} . ");\n";
         }
