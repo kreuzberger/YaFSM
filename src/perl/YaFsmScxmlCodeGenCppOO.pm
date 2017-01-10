@@ -212,6 +212,7 @@ sub outFSMHeader
 
   print $fh "#include <string>\n";
   print $fh "#include <map>\n";
+  print $fh "#include <vector>\n";
   print $fh "#include <assert.h>\n";
 
   print $fh "\n// forward declarations\n";
@@ -276,7 +277,7 @@ sub outFSMHeader
   my $enterStateName = $YaFsmScxmlParser::gFSM->{initial};
   if( defined $enterStateName )
   {
-    print $fh "    mpoCurrentState = &moState". $enterStateName . ";\n";
+    print $fh "    setStateByName(\"$enterStateName\");\n";
   }
   else
   {
@@ -289,7 +290,7 @@ sub outFSMHeader
   print $fh "\n";
 
   print $fh "  void initFSM( void );\n";
-  print $fh "  virtual void sendEventID( int iEventId, int iDelayMs = 20 );\n";
+  print $fh "  virtual void sendEventID( int iEventId, int iDelayMs = 0 );\n";
   print $fh "  virtual void cancelEventID( int iEventId );\n";
 
   if( %YaFsmScxmlParser::gFSMDataModel )
@@ -358,6 +359,7 @@ sub outFSMHeader
   print $fh "  void setLocked( bool );\n";
   print $fh "  bool isInitialised( void );\n";
   print $fh "  void registerEventID( int );\n";
+  print $fh "  void exitSubStates(const std::string& name );\n";
 
   print $fh "  " . $FSMName . "StateBase* mpoCurrentState;\n";
   if( %YaFsmScxmlParser::gFSMDataModel )
@@ -425,8 +427,22 @@ sub outFSMHeader
   print $fh "\n";
   print $fh "inline void " . $FSMName . "::exitState( const std::string& name )\n";
   print $fh "{\n";
+  print $fh "  exitSubStates(name);\n";
   print $fh "  moStateMap[name]->exit(self());\n";
   print $fh "}\n\n";
+  print $fh "inline void " . $FSMName . "::exitSubStates( const std::string& name )\n";
+  print $fh "{\n";
+  print $fh "  std::vector<std::string> subStates;\n";
+  print $fh "  std::string stateName = mpoCurrentState->getStateName();\n";
+  print $fh "  while(name != stateName)\n";
+  print $fh "  {\n";
+  print $fh "    moStateMap[stateName]->exit(self());\n";
+  print $fh "    stateName = moStateMap[stateName]->getParentStateName();\n";
+  print $fh "  }\n";
+  print $fh "}\n\n";
+
+
+
   print $fh "inline bool " . $FSMName . "::isLocked( void )\n";
   print $fh "{\n";
   print $fh "  return mbLockTrigger;\n";
@@ -571,6 +587,7 @@ sub outFSMStateBaseHeader
   print $fh "public:\n";
   print $fh "  " . $FSMName . "StateBase( )\n";
   print $fh "   : mStateName()\n";
+  print $fh "   , mParentStateName()\n";
   print $fh "    {\n";
   print $fh "    }\n";
 
@@ -579,7 +596,9 @@ sub outFSMStateBaseHeader
   print $fh "\n";
   print $fh "protected:\n";
   print $fh "  const std::string& getStateName() const;\n";
+  print $fh "  const std::string& getParentStateName() const;\n";
   print $fh "  void setStateName(const std::string&);\n";
+  print $fh "  void setParentStateName(const std::string&);\n";
   print $fh "\n";
   print $fh "  // definition of all triggers\n";
 
@@ -596,6 +615,7 @@ sub outFSMStateBaseHeader
   print $fh "\n";
   print $fh "protected:\n";
   print $fh "  std::string mStateName;\n";
+  print $fh "  std::string mParentStateName;\n";
 
   print $fh "};\n";
   print $fh "\n";
@@ -607,6 +627,16 @@ sub outFSMStateBaseHeader
   print $fh "inline void " . $FSMName . "StateBase::setStateName(const std::string& str)\n";
   print $fh "{\n";
   print $fh "  mStateName = str;\n";
+  print $fh "}\n";
+  print $fh "\n";
+  print $fh "inline const std::string& " . $FSMName . "StateBase::getParentStateName() const\n";
+  print $fh "{\n";
+  print $fh "  return mParentStateName;\n";
+  print $fh "}\n";
+  print $fh "\n";
+  print $fh "inline void " . $FSMName . "StateBase::setParentStateName(const std::string& str)\n";
+  print $fh "{\n";
+  print $fh "  mParentStateName = str;\n";
   print $fh "}\n";
   print $fh "\n";
 
@@ -645,6 +675,8 @@ sub outFSMStates
 
   print $fhS '#include "' . $FSMName . "StateImpl.h\"\n";
   print $fhS '#include "' . $FSMName . ".h\"\n";
+  print $fhS "#include <vector>\n";
+  print $fhS "#include <iostream>\n";
 
   print $fhS "namespace N". $FSMName . "\n";
   print $fhS "{\n";
@@ -704,12 +736,15 @@ sub genStateImpl
   my $currRef = shift;
   my $parentName =shift;
 
+  my $baseClassName = "";
+
   YaFsm::printDbg("codegen: state $state->{id}");
   YaFsm::printDbg("codegen: parent $parentName") if defined $parentName;
 
   if(defined $parentName && length($parentName))
   {
     print $fhH "class State".$state->{id}.": public State" . $parentName ."\n";
+    $baseClassName = $parentName;
   }
   else
   {
@@ -775,7 +810,8 @@ sub genStateImpl
 
   print $fhS "State".$state->{id}."::State".$state->{id}."()\n";
   print $fhS "{\n";
-  print $fhS "  setStateName( \"State". $state->{id} ."\" );\n";
+  print $fhS "  setStateName( \"". $state->{id} ."\" );\n";
+  print $fhS "  setParentStateName( \"". $baseClassName ."\" );\n" if( 0 < length($baseClassName));
   print $fhS "}\n\n";
 
   print $fhS "State".$state->{id}."::~State".$state->{id}."()\n";
@@ -919,7 +955,6 @@ sub genStateImpl
     {
       print $fhS "void State".$state->{id}."::exit( " . $YaFsmScxmlParser::gFSMName . "& /*fsmImpl*/ )\n";
       print $fhS "{\n";
-
     }
     print $fhS "}\n\n";
 

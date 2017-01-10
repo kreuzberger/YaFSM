@@ -10,7 +10,7 @@ INCLUDE (${CMAKE_ROOT}/Modules/FindQt.cmake)
 #INCLUDE_DIRECTORIES( ${QT_INCLUDE_DIR} )
 if( UNIX )
   include_directories(/usr/include)
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wall -Woverloaded-virtual")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wall -Woverloaded-virtual")
 else( )
 endif( )
 

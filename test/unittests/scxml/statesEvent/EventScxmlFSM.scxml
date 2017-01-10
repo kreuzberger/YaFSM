@@ -2,7 +2,7 @@
 <scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" binding="early" xmlns:qt="http://www.qt.io/2015/02/scxml-ext" name="EventScxmlFSM" qt:editorversion="4.2.0" datamodel="cplusplus:EventScxmlFSMDataModel:EventScxmlFSMDataModel.h" initial="stop">
     <qt:editorinfo initialGeometry="230.48;64.25;-20;-20;40;40"/>
     <state id="stop">
-        <qt:editorinfo scenegeometry="284.05;178.46;116.91;128.46;227.14;100" geometry="284.05;178.46;-167.14;-50;227.14;100"/>
+        <qt:editorinfo geometry="284.05;178.46;-167.14;-50;227.14;100" scenegeometry="284.05;178.46;116.91;128.46;227.14;100"/>
         <transition type="external" event="AutoStart" target="stop">
             <raise event="run"/>
             <script>model.onTriggerAutoStart();</script>
@@ -19,9 +19,9 @@
         </onexit>
     </state>
     <state id="run">
-        <qt:editorinfo scenegeometry="218.24;341.63;158.24;291.63;120;100" geometry="218.24;341.63;-60;-50;120;100"/>
+        <qt:editorinfo geometry="218.24;341.63;-60;-50;120;100" scenegeometry="218.24;341.63;158.24;291.63;120;100"/>
         <transition type="external" event="AutoEnd" target="Final">
-            <qt:editorinfo endTargetFactors="50.01;28.15" movePoint="0;1.02"/>
+            <qt:editorinfo movePoint="0;1.02" endTargetFactors="52.21;10.32"/>
             <script>model.onAutoEnd();</script>
         </transition>
         <onentry>
@@ -32,10 +32,10 @@
             <script>model.onExitRun();</script>
         </onexit>
     </state>
-    <final id="Final">
-        <qt:editorinfo scenegeometry="218.24;499.70;198.24;479.70;40;40" geometry="218.24;499.70;-20;-20;40;40"/>
+    <state id="Final">
+        <qt:editorinfo geometry="218.24;513.98;-60;-50;120;100" scenegeometry="218.24;513.98;158.24;463.98;120;100"/>
         <onentry>
             <script>model.onEnterFinal();</script>
         </onentry>
-    </final>
+    </state>
 </scxml>

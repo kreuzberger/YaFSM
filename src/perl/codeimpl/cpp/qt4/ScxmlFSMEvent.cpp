@@ -69,11 +69,14 @@ void ScxmlFSMEvent::timerEvent(QTimerEvent* pEvent)
 {
   if( 0 != pEvent)
   {
-    int eventID = mActiveEventMap.key(pEvent->timerId());
-    if (0 != eventID )
+    if(mActiveEventMap.values().contains(pEvent->timerId()))
     {
-      mCbHandler.processTimerEventID(eventID);
-      cancelEventID(eventID);
+      int eventID = mActiveEventMap.key(pEvent->timerId());
+      if (0 != eventID )
+      {
+        mCbHandler.processTimerEventID(eventID);
+        cancelEventID(eventID);
+      }
     }
   }
 }

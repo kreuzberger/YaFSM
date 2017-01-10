@@ -147,7 +147,7 @@ sub readFSM
       # force array is useful for configurations that have only one entry and are not parsed into
       # array by default. So we ensure that the buildcfg always is an array!
       #  my $xmlContent = eval{$xml->XMLin("$filename", SuppressEmpty => '',ForceArray => qr/buildcfg$/)};
-      my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => [qw(state transition final datamodel data raise send param )])};
+      my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => [qw(state transition datamodel data raise send param )])};
       #my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => qr/state$/ )};
       if ($@)
       {
@@ -400,6 +400,14 @@ sub parseFSM
   my $parentName = shift;
   my $parentParentName=shift;
   $gStateLevel++;
+
+  if($currRef->{final} )
+  {
+    YaFsm::printDbg("found final state $currRef->{final}{id}\n");
+    $currRef->{final}{finalState}=1;
+    push(@{$currRef->{state}},$currRef->{final});
+  }
+
 
   foreach my $state (@{$currRef->{state}})
   {
