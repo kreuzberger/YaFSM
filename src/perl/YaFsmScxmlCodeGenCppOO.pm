@@ -72,6 +72,7 @@ sub getEventPara
 sub genSendEventImpl
 {
   my $fhS = shift;
+  my $sendId = shift;
   my $send = shift;
 
   my $eventPara = getEventPara($send);
@@ -86,13 +87,13 @@ sub genSendEventImpl
 
   if($send->{id})
   {
-    YaFsm::printWarn("use of generated ids for send event not allowed, only idlocation is supported!\n!");
+    YaFsm::printWarn("use of generated ids for send event not allowed!\n!");
   }
   elsif($send->{idlocation})
   {
-    $strID = "$send->{idlocation} = ";
+    YaFsm::printWarn("use of idlocation for send event not allowed!\n!");
   }
-  print $fhS "    " . $strID . "fsmImpl.sendEvent( data, $eventPara->{delay});\n";
+  print $fhS "    " . $strID . "fsmImpl.sendEvent( \"$sendId\", data, $eventPara->{delay});\n";
 
 }
 
@@ -327,7 +328,6 @@ sub outFSMHeader
   {
     print $fh '    moTransCoverageMap["' . $trans .'"] = 0' .";\n";
   }
- # foreach my $key (keys(%YaFsmScxmlParser::gFSMEvents))
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
   {
     print $fh '    mFSMEvent.setEventID(' . "EVENT_".$key .");\n";
@@ -353,9 +353,9 @@ sub outFSMHeader
   print $fh "  void initFSM( void );\n";
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
   {
-    print $fh "  virtual int sendEvent( const " . $key . "& data, int iDelayMs);\n";
+    print $fh "  virtual int sendEvent( const std::string& sendId, const " . $key . "& data, int iDelayMs);\n";
   }
-  print $fh "  virtual void cancelEvent( int sendid );\n";
+  print $fh "  virtual void cancelEvent( const std::string& sendId );\n";
 
   if( %YaFsmScxmlParser::gFSMDataModel )
   {
@@ -533,21 +533,24 @@ sub outFSMHeader
   print $fh "\n";
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
   {
-    print $fh "inline int " . $FSMName . "::sendEvent( const " . $key . "& data, int iDelayMs )\n";
+    print $fh "inline int " . $FSMName . "::sendEvent( const std::string& sendId, const " . $key . "& data, int iDelayMs )\n";
     print $fh "{\n";
-    print $fh "  int id = mFSMEvent.sendEventID( EVENT_" . $key . ", iDelayMs );\n";
+    print $fh "  int id = mFSMEvent.sendEventID( sendId + \"." . $key . "\", EVENT_". $key." , iDelayMs );\n";
     print $fh "  mParaMap_". $key . "[id] = data;\n";
     print $fh "  return id;\n";
     print $fh "}\n";
   }
 
-  print $fh "inline void " . $FSMName . "::cancelEvent( int sendID )\n";
+  print $fh "inline void " . $FSMName . "::cancelEvent( const std::string& sendId )\n";
   print $fh "{\n";
-  print $fh "  mFSMEvent.cancelEvent( sendID );\n";
+  print $fh "  std::vector<int> ids = mFSMEvent.cancelEvent( sendId );\n";
+  print $fh "  for(auto it = ids.begin(); it != ids.end(); ++it )\n";
+  print $fh "  {\n";
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
   {
-    print $fh "  if( mParaMap_". $key . ".find(sendID) != mParaMap_" . $key . ".end()) { mParaMap_". $key . ".erase(sendID); }\n";
+    print $fh "    if( mParaMap_". $key . ".find(*it) != mParaMap_" . $key . ".end()) { mParaMap_". $key . ".erase(*it); }\n";
   }
+  print $fh "  }\n";
   print $fh "}\n";
 
 
@@ -975,14 +978,14 @@ sub genStateImpl
       {
         foreach(@{$state->{onentry}{raise}})
         {
-          print $fhS "  fsmImpl.sendEvent(" . $_->{event}."(), 0);\n";
+          print $fhS "  fsmImpl.sendEvent(\"$state->{id}\", " . $_->{event}."(), 0);\n";
         }
       }
       if(defined $state->{onentry}{send})
       {
         foreach(@{$state->{onentry}{send}})
         {
-          genSendEventImpl($fhS, $_);
+          genSendEventImpl($fhS, $state->{id}, $_);
         }
       }
       if(defined $state->{onentry}{cancel})
@@ -1019,7 +1022,7 @@ sub genStateImpl
       {
         foreach(@{$state->{onexit}{raise}})
         {
-          print $fhS "  fsmImpl.sendEvent(". $_->{event} . "(), 0);\n";
+          print $fhS "  fsmImpl.sendEvent( \"$state->{id}\", ". $_->{event} . "(), 0);\n";
         }
       }
 
@@ -1027,7 +1030,7 @@ sub genStateImpl
       {
         foreach(@{$state->{onexit}{send}})
         {
-          genSendEventImpl($fhS, $_);
+          genSendEventImpl($fhS, $state->{id}, $_);
         }
       }
       if(defined $state->{onexit}{cancel})
@@ -1113,11 +1116,11 @@ sub genStateTransImpl
             {
               foreach(@{$transArray[$nextIdx]->{raise}})
               {
-                print $fhS "    fsmImpl.sendEvent(" . $_->{event} . "(), 0);\n";
+                print $fhS "    fsmImpl.sendEvent( \"$transArray[$nextIdx]->{event}\", " . $_->{event} . "(), 0);\n";
               }
               foreach(@{$transArray[$nextIdx]->{send}})
               {
-                genSendEventImpl($fhS, $_);
+                genSendEventImpl($fhS, $transArray[$nextIdx]->{event}, $_);
               }
               foreach(@{$transArray[$nextIdx]->{cancel}})
               {

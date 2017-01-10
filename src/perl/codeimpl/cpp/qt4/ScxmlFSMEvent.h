@@ -11,18 +11,23 @@ class QTimerEvent;
 
 class ScxmlFSMEventInfo
 {
-  public:
+  private:
     ScxmlFSMEventInfo()
     {
     }
 
-    ScxmlFSMEventInfo( int delayMs )
+public:
+    ScxmlFSMEventInfo( int eventID, int timerID )
+      : mEventID(eventID)
+      , mTimerID(timerID)
     {
     }
 
     ~ScxmlFSMEventInfo() {}
 
   public:
+    int mEventID;
+    int mTimerID;
 };
 
 
@@ -33,8 +38,8 @@ public:
   ScxmlFSMEvent( IScxmlFSMEventCB& );
   virtual ~ScxmlFSMEvent();
   virtual void setEventID( int eventID);
-  virtual int sendEventID( int eventID, int delayMs );
-  virtual void cancelEvent( int sendID );
+  virtual int sendEventID( const std::string& sendId, int eventID, int delayMs );
+  virtual std::vector<int> cancelEvent( const std::string& sendID );
   virtual void timerEvent( QTimerEvent* );
 
 private:
@@ -44,7 +49,7 @@ private:
 
   IScxmlFSMEventCB& mCbHandler;
   QMap<int,int> mEventMap;
-  QMap<int,int> mActiveEventMap;
+  QMap<std::string,ScxmlFSMEventInfo> mActiveEventMap;
 };
 
 

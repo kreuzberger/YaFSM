@@ -47,40 +47,47 @@ void ScxmlFSMEvent::setEventID( int eventID)
 }
 
 
-int ScxmlFSMEvent::sendEventID( int eventID, int delayMs )
+int ScxmlFSMEvent::sendEventID( const std::string& sendId, int eventID, int delayMs )
 {
   int id = 0;
   if(mEventMap.contains(eventID))
   {
     int iActiveTimerID = startTimer(delayMs);
-    mActiveEventMap.insert(eventID,iActiveTimerID);
+    ScxmlFSMEventInfo eventInfo(eventID,iActiveTimerID);
+    mActiveEventMap.insertMulti(sendId,eventInfo);
     id = iActiveTimerID;
   }
   assert( 0 < id );
   return id;
 }
 
-void ScxmlFSMEvent::cancelEvent( int sendID )
+std::vector<int> ScxmlFSMEvent::cancelEvent( const std::string& sendId )
 {
-  if(mActiveEventMap.values().contains(sendID))
+  std::vector<int> canceledEvents;
+  if(mActiveEventMap.contains(sendId))
   {
-    killTimer(sendID);
-    int eventID = mActiveEventMap.key(sendID);
-    mActiveEventMap.remove(eventID);
+    auto it = mActiveEventMap.find(sendId);
+    while (it != mActiveEventMap.end() && it.key() == sendId)
+    {
+      killTimer(it.value().mTimerID);
+      canceledEvents.push_back(it.value().mTimerID);
+      ++it;
+    }
+    mActiveEventMap.remove(sendId);
   }
+  return canceledEvents;
 } 
 
 void ScxmlFSMEvent::timerEvent(QTimerEvent* pEvent)
 {
   if( 0 != pEvent)
   {
-    if(mActiveEventMap.values().contains(pEvent->timerId()))
+    for(auto it = mActiveEventMap.begin(); it != mActiveEventMap.end(); ++it)
     {
-      int eventID = mActiveEventMap.key(pEvent->timerId());
-      if (0 != eventID )
-      {
-        mCbHandler.processTimerEventID(eventID, mActiveEventMap[eventID]);
-        cancelEvent(mActiveEventMap[eventID]);
+      if( pEvent->timerId() == it.value().mTimerID)
+       {
+        mCbHandler.processTimerEventID(it.value().mEventID, it.value().mTimerID);
+        cancelEvent(it.key());
       }
     }
   }
