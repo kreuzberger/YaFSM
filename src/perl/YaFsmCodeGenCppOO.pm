@@ -560,7 +560,6 @@ sub outFSMHeader
       print $fh "  switch(iTimerID)\n";
       print $fh "  {\n";
 
-      use Data::Dumper;
       #while( my( $key, %value ) = each( %YaFsmParser::gFSMTimers) )
       foreach my $key (keys(%YaFsmParser::gFSMTimers))
       {

@@ -98,8 +98,6 @@ sub init
       }
     }
   }
-
-#  $YaFsm::gVerbose=1;
 }
 
 
@@ -450,7 +448,6 @@ sub parseFSM
         foreach(@{$trans->{send}})
         {
           my $delay = 0;
-          $delay = $_->{delay} if ($_->{delay} );
           $gFSMEvents{$_->{event}}= {event => $_->{event}, delay => $delay};
         }
       }

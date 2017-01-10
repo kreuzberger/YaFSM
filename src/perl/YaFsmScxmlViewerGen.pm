@@ -77,7 +77,6 @@ sub setDefaultOpt
 
 sub genDotFile
 {
-  $YaFsm::gVerbose = 1;
   eval "use Data::Dumper";
 
   my $basename = shift;
@@ -153,7 +152,6 @@ sub genDotFile
     }
 
     my $strWallpaperStateLinks;
-    print Dumper($currRef);
 
     if ( $currRef->{initial} )
     {

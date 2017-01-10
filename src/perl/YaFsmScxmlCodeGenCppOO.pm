@@ -44,6 +44,28 @@ if($YaFsm::gVerbose)
   }
 }
 
+sub getEventPara
+{
+  my $event = shift;
+  my %eventpara = { delay => 0, params => [] };
+
+  if($event->{delay} )
+  {
+    my $delay = $event->{delay};
+    $delay =~ s/(\d+)ms$/$1/ if( $delay =~ m/ms$/ );
+    if( $delay =~ m/s$/ )
+    {
+      $delay =~ s/(\d+)s$/$1/ ;
+      $delay = $delay * 1000;
+    }
+
+    $eventpara{delay} = $delay;
+
+  }
+
+  return %eventpara;
+}
+
 sub writeCodeFiles
 {
   #chdir($YaFsmScxmlParser::gFSMDscOutPath);
@@ -900,7 +922,8 @@ sub genStateImpl
       {
         foreach(@{$state->{onentry}{send}})
         {
-          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'.$_->{event}.");\n";
+          my %eventPara = getEventPara($_);
+          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'.$_->{event}.", $eventPara{delay});\n";
         }
       }
     }
@@ -946,7 +969,8 @@ sub genStateImpl
       {
         foreach(@{$state->{onexit}{send}})
         {
-          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_' . $_->{event} . ");\n";
+          my %eventPara = getEventPara($_);
+          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_' . $_->{event} . ", $eventPara{delay});\n";
         }
       }
 
@@ -1025,6 +1049,11 @@ sub genStateTransImpl
               foreach(@{$transArray[$nextIdx]->{raise}})
               {
                 print $fhS "    fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'. $_->{event} .");\n";
+              }
+              foreach(@{$transArray[$nextIdx]->{send}})
+              {
+                my %eventPara = getEventPara($_);
+                print $fhS "    fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'. $_->{event} .", $eventPara{delay});\n";
               }
               #  print $fh "<TR><TD>^$trans->{event}</TD></TR>;\n";
             }

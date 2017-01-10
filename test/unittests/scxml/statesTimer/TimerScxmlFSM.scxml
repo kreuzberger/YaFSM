@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scxml xmlns="http://www.w3.org/2005/07/scxml" version="1.0" binding="early" xmlns:qt="http://www.qt.io/2015/02/scxml-ext" name="TimerScxmlFSM" qt:editorversion="4.2.0" datamodel="cplusplus:TimerScxmlFSMDataModel:TimerScxmlFSMDataModel.h" initial="stop">
+    <qt:editorinfo initialGeometry="230.48;64.25;-20;-20;40;40"/>
+    <state id="stop">
+        <qt:editorinfo scenegeometry="284.05;178.46;116.91;128.46;227.14;100" geometry="284.05;178.46;-167.14;-50;227.14;100"/>
+        <transition type="external" event="AutoStart" target="stop">
+            <script>model.onTriggerAutoStart();</script>
+            <send event="run" delay="1000ms"/>
+        </transition>
+        <transition type="external" event="run" target="run">
+            <qt:editorinfo endTargetFactors="50.74;12.07"/>
+            <script>model.onAutoStart();</script>
+        </transition>
+        <onentry>
+            <script>model.onEnterStop();</script>
+        </onentry>
+        <onexit>
+            <script>model.onExitStop();</script>
+        </onexit>
+    </state>
+    <state id="run">
+        <qt:editorinfo scenegeometry="230.48;344.69;170.48;294.69;120;100" geometry="230.48;344.69;-60;-50;120;100"/>
+        <transition type="external" event="AutoEnd" target="FinalState">
+            <qt:editorinfo movePoint="0;1.02"/>
+            <script>model.onAutoEnd();</script>
+        </transition>
+        <onentry>
+            <script>model.onEnterRun();</script>
+            <send event="AutoEnd" delay="2s"/>
+        </onentry>
+        <onexit>
+            <script>model.onExitRun();</script>
+        </onexit>
+    </state>
+    <final id="FinalState">
+        <qt:editorinfo scenegeometry="230.48;523.16;210.48;503.16;40;40" geometry="230.48;523.16;-20;-20;40;40"/>
+        <onentry>
+            <script>model.onEnterFinal();</script>
+        </onentry>
+    </final>
+</scxml>
