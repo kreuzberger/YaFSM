@@ -102,7 +102,7 @@ sub genCancelEventImpl
   my $fhS = shift;
   my $cancel = shift;
 
-  print $fhS "  fsmImpl.cancelEvent_" . $cancel->{event} . "(" . $cancel->{sendid} . ");\n";
+  print $fhS "  fsmImpl.cancelEvent(" . $cancel->{sendid} . ");\n";
 }
 
 sub writeCodeFiles
@@ -354,8 +354,8 @@ sub outFSMHeader
   while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
   {
     print $fh "  virtual int sendEvent( const " . $key . "& data, int iDelayMs);\n";
-    print $fh "  virtual void cancelEvent_". $key . "( int event );\n";
   }
+  print $fh "  virtual void cancelEvent( int sendid );\n";
 
   if( %YaFsmScxmlParser::gFSMDataModel )
   {
@@ -539,14 +539,19 @@ sub outFSMHeader
     print $fh "  mParaMap_". $key . "[id] = data;\n";
     print $fh "  return id;\n";
     print $fh "}\n";
-    print $fh "inline void " . $FSMName . "::cancelEvent_" . $key. "( int sendID )\n";
-    print $fh "{\n";
-    print $fh "  mFSMEvent.cancelEvent( sendID );\n";
-    print $fh "  mParaMap_". $key . ".erase(sendID);\n";
-    print $fh "}\n";
   }
 
-  print $fh "inline void " . $FSMName . "::processTimerEventID( int event, int id )\n";
+  print $fh "inline void " . $FSMName . "::cancelEvent( int sendID )\n";
+  print $fh "{\n";
+  print $fh "  mFSMEvent.cancelEvent( sendID );\n";
+  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
+  {
+    print $fh "  if( mParaMap_". $key . ".find(sendID) != mParaMap_" . $key . ".end()) { mParaMap_". $key . ".erase(sendID); }\n";
+  }
+  print $fh "}\n";
+
+
+print $fh "inline void " . $FSMName . "::processTimerEventID( int event, int id )\n";
   print $fh "{\n";
   # definition of all events as enumeration
 
