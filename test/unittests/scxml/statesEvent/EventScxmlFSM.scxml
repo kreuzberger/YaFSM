@@ -20,8 +20,8 @@
     </state>
     <state id="run">
         <qt:editorinfo geometry="218.24;341.63;-60;-50;120;100" scenegeometry="218.24;341.63;158.24;291.63;120;100"/>
-        <transition type="external" event="AutoEnd" target="Final">
-            <qt:editorinfo movePoint="0;1.02" endTargetFactors="52.21;10.32"/>
+        <transition type="external" event="AutoEnd" target="FinalState">
+            <qt:editorinfo movePoint="0;1.02" endTargetFactors="36.60;23.21"/>
             <script>model.onAutoEnd();</script>
         </transition>
         <onentry>
@@ -32,10 +32,10 @@
             <script>model.onExitRun();</script>
         </onexit>
     </state>
-    <state id="Final">
-        <qt:editorinfo geometry="218.24;513.98;-60;-50;120;100" scenegeometry="218.24;513.98;158.24;463.98;120;100"/>
+    <final id="FinalState">
+        <qt:editorinfo geometry="290.64;513.98;-20;-20;40;40" scenegeometry="290.64;513.98;270.64;493.98;40;40"/>
         <onentry>
             <script>model.onEnterFinal();</script>
         </onentry>
-    </state>
+    </final>
 </scxml>
