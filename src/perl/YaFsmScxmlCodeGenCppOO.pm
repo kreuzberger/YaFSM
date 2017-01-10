@@ -47,7 +47,7 @@ if($YaFsm::gVerbose)
 sub getEventPara
 {
   my $event = shift;
-  my %eventpara = { delay => 0, params => [] };
+  my $eventpara = { delay => 0 };
 
   if($event->{delay} )
   {
@@ -59,11 +59,50 @@ sub getEventPara
       $delay = $delay * 1000;
     }
 
-    $eventpara{delay} = $delay;
-
+    $eventpara->{delay} = $delay;
+  }
+  if ($event->{param})
+  {
+    $eventpara->{param} = $event->{param} ;
   }
 
-  return %eventpara;
+  return $eventpara;
+}
+
+sub genSendEventImpl
+{
+  my $fhS = shift;
+  my $send = shift;
+
+  my $eventPara = getEventPara($send);
+  print $fhS "    $send->{event} data;\n";
+  use Data::Dumper;
+  foreach my $para ( @{$eventPara->{param}} )
+  {
+    print $fhS "    data.$para->{name} = $para->{expr};\n" if( $para->{expr} );
+  }
+
+  my $strID = "";
+
+  if($send->{id})
+  {
+    YaFsm::printWarn("use of generated ids for send event not allowed, only idlocation is supported!\n!");
+  }
+  elsif($send->{idlocation})
+  {
+    $strID = "$send->{idlocation} = ";
+  }
+  print $fhS "    " . $strID . "fsmImpl.sendEvent( data, $eventPara->{delay});\n";
+
+}
+
+
+sub genCancelEventImpl
+{
+  my $fhS = shift;
+  my $cancel = shift;
+
+  print $fhS "  fsmImpl.cancelEvent_" . $cancel->{event} . "(" . $cancel->{sendid} . ");\n";
 }
 
 sub writeCodeFiles
@@ -312,8 +351,11 @@ sub outFSMHeader
   print $fh "\n";
 
   print $fh "  void initFSM( void );\n";
-  print $fh "  virtual void sendEventID( int iEventId, int iDelayMs = 0 );\n";
-  print $fh "  virtual void cancelEventID( int iEventId );\n";
+  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
+  {
+    print $fh "  virtual int sendEvent( const " . $key . "& data, int iDelayMs);\n";
+    print $fh "  virtual void cancelEvent_". $key . "( int event );\n";
+  }
 
   if( %YaFsmScxmlParser::gFSMDataModel )
   {
@@ -341,7 +383,7 @@ sub outFSMHeader
   print $fh "  void setTransByName( const std::string& name );\n";
   print $fh "  void enterCurrentState();\n";
   print $fh "  void exitState( const std::string& name );\n";
-  print $fh "  virtual void processTimerEventID( int iTimerId );\n";
+  print $fh "  virtual void processTimerEventID( int event, int id );\n";
 
   print $fh "\n";
   print $fh "//todo make this private and allow test makros to access this\n";
@@ -401,6 +443,11 @@ sub outFSMHeader
   print $fh "  bool mbLockTrigger;\n";
   print $fh "  bool mbInit;\n";
   print $fh "  ScxmlFSMEvent mFSMEvent;\n";
+  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
+  {
+    print $fh "  std::map<int, $key> mParaMap_$key;\n";
+  }
+
   foreach my $member ( @YaFsmScxmlParser::gFSMMembers )
   {
     if ($member->{src})
@@ -484,15 +531,22 @@ sub outFSMHeader
   print $fh "  enterCurrentState();\n";
   print $fh "}\n\n";
   print $fh "\n";
-  print $fh "inline void " . $FSMName . "::sendEventID( int iEventID, int iDelayMs )\n";
-  print $fh "{\n";
-  print $fh "  mFSMEvent.sendEventID( iEventID, iDelayMs );\n";
-  print $fh "}\n";
-  print $fh "inline void " . $FSMName . "::cancelEventID( int iEventID )\n";
-  print $fh "{\n";
-  print $fh "  mFSMEvent.cancelEventID( iEventID );\n";
-  print $fh "}\n";
-  print $fh "inline void " . $FSMName . "::processTimerEventID( int iEventID )\n";
+  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
+  {
+    print $fh "inline int " . $FSMName . "::sendEvent( const " . $key . "& data, int iDelayMs )\n";
+    print $fh "{\n";
+    print $fh "  int id = mFSMEvent.sendEventID( EVENT_" . $key . ", iDelayMs );\n";
+    print $fh "  mParaMap_". $key . "[id] = data;\n";
+    print $fh "  return id;\n";
+    print $fh "}\n";
+    print $fh "inline void " . $FSMName . "::cancelEvent_" . $key. "( int sendID )\n";
+    print $fh "{\n";
+    print $fh "  mFSMEvent.cancelEvent( sendID );\n";
+    print $fh "  mParaMap_". $key . ".erase(sendID);\n";
+    print $fh "}\n";
+  }
+
+  print $fh "inline void " . $FSMName . "::processTimerEventID( int event, int id )\n";
   print $fh "{\n";
   # definition of all events as enumeration
 
@@ -500,7 +554,7 @@ sub outFSMHeader
   {
     # definition of all timers as enumeration
     print $fh "\n";
-    print $fh "  switch(iEventID)\n";
+    print $fh "  switch(event)\n";
     print $fh "  {\n";
     foreach my $key (keys(%YaFsmScxmlParser::gFSMEvents))
    # while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMEvents) )
@@ -508,8 +562,9 @@ sub outFSMHeader
       YaFsm::printDbg("events: $key ");
       print $fh "  case " . "EVENT_".$key.":\n";
       print $fh "  {\n";
-      print $fh "    $key event;\n";
+      print $fh "    $key event = mParaMap_". $key. "[id];\n";
       print $fh "    sendEvent" . "(event);\n";
+      print $fh "    mParaMap_$key.erase(id);\n";
       print $fh "  }\n";
       print $fh "  break;\n";
     }
@@ -915,17 +970,24 @@ sub genStateImpl
       {
         foreach(@{$state->{onentry}{raise}})
         {
-          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'.$_->{event}.");\n";
+          print $fhS "  fsmImpl.sendEvent(" . $_->{event}."(), 0);\n";
         }
       }
       if(defined $state->{onentry}{send})
       {
         foreach(@{$state->{onentry}{send}})
         {
-          my %eventPara = getEventPara($_);
-          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'.$_->{event}.", $eventPara{delay});\n";
+          genSendEventImpl($fhS, $_);
         }
       }
+      if(defined $state->{onentry}{cancel})
+      {
+        foreach(@{$state->{onentry}{cancel}})
+        {
+          genCancelEventImpl($fhS, $_);
+        }
+      }
+
     }
 
     if( defined $enterStateName )
@@ -942,15 +1004,6 @@ sub genStateImpl
       print $fhS "void State".$state->{id}."::exit( " . $YaFsmScxmlParser::gFSMName . "& fsmImpl )\n";
       print $fhS "{\n";
 
-      if(defined $state->{tstopexit})
-      {
-        my @str = split(/;/,$state->{tstopexit});
-        foreach(@str)
-        {
-          print $fhS "  fsmImpl.cancelEventID( " . $YaFsmScxmlParser::gFSMName . "::" . "EVENT_" . $_ ." );\n";
-        }
-      }
-
 
       if(%YaFsmScxmlParser::gFSMDataModel && defined $state->{onexit}{script})
       {
@@ -961,7 +1014,7 @@ sub genStateImpl
       {
         foreach(@{$state->{onexit}{raise}})
         {
-          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_' . $_->{event} . ");\n";
+          print $fhS "  fsmImpl.sendEvent(". $_->{event} . "(), 0);\n";
         }
       }
 
@@ -969,10 +1022,17 @@ sub genStateImpl
       {
         foreach(@{$state->{onexit}{send}})
         {
-          my %eventPara = getEventPara($_);
-          print $fhS "  fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_' . $_->{event} . ", $eventPara{delay});\n";
+          genSendEventImpl($fhS, $_);
         }
       }
+      if(defined $state->{onexit}{cancel})
+      {
+        foreach(@{$state->{onexit}{cancel}})
+        {
+          genCancelEventImpl($fhS, $_);
+        }
+      }
+
 
     }
     else
@@ -1048,14 +1108,16 @@ sub genStateTransImpl
             {
               foreach(@{$transArray[$nextIdx]->{raise}})
               {
-                print $fhS "    fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'. $_->{event} .");\n";
+                print $fhS "    fsmImpl.sendEvent(" . $_->{event} . "(), 0);\n";
               }
               foreach(@{$transArray[$nextIdx]->{send}})
               {
-                my %eventPara = getEventPara($_);
-                print $fhS "    fsmImpl.sendEventID(" . $YaFsmScxmlParser::gFSMName .'::EVENT_'. $_->{event} .", $eventPara{delay});\n";
+                genSendEventImpl($fhS, $_);
               }
-              #  print $fh "<TR><TD>^$trans->{event}</TD></TR>;\n";
+              foreach(@{$transArray[$nextIdx]->{cancel}})
+              {
+                genCancelEventImpl($fhS, $_);
+              }
             }
 
             if( $transArray[$nextIdx]->{source} ne $transArray[$nextIdx]->{target} )

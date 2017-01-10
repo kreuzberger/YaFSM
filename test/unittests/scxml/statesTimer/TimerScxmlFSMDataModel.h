@@ -18,6 +18,10 @@ public:
 
 class run
 {
+public:
+  run() : mCarType(0) {}
+  int data() const { return mCarType; }
+  int mCarType;
 
 };
 

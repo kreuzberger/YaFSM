@@ -7,7 +7,7 @@ class IScxmlFSMEventCB
   IScxmlFSMEventCB();
   virtual ~IScxmlFSMEventCB();
   public:
-  virtual void processTimerEventID(int iEventID) = 0 ;
+  virtual void processTimerEventID(int iEventID, int id) = 0 ;
 };
 
 

@@ -424,8 +424,7 @@ sub parseFSM
       {
         YaFsm::printDbg("transition on state $parentName: startstate $state->{id}, endstate $trans->{target}, trigger $trans->{event}");
         YaFsm::printDbg("trigger: $trans->{event} ()");
-        $trans->{param} = "";
-        $gFSMTriggers{$trans->{event}}= $trans->{param};
+        $gFSMTriggers{$trans->{event}}= 1;
       }
       else
       {
@@ -440,7 +439,7 @@ sub parseFSM
       {
         foreach(@{$trans->{raise}})
         {
-          $gFSMEvents{$_->{event}}= {event => $_->{event}, delay => 0};
+          $gFSMEvents{$_->{event}}= 1;
         }
       }
       if (  $trans->{send} )
@@ -448,7 +447,7 @@ sub parseFSM
         foreach(@{$trans->{send}})
         {
           my $delay = 0;
-          $gFSMEvents{$_->{event}}= {event => $_->{event}, delay => $delay};
+          $gFSMEvents{$_->{event}}= 1;
         }
       }
 
@@ -474,11 +473,7 @@ sub parseFSM
       {
         foreach (@{$state->{onentry}{send}})
         {
-          my $delay = 0;
-          $delay = $_->{delay} if ($_->{delay} );
-          my @param;
-          @param = $_->{param} if ( $_->{param} );
-          $gFSMEvents{$_->{event}}= {event => $_->{event}, delay => $delay, param => @param};
+          $gFSMEvents{$_->{event}}= 1;
         }
       }
     }
@@ -493,18 +488,14 @@ sub parseFSM
       {
         foreach($state->{onexit}{raise})
         {
-          $gFSMEvents{$_->{event}} = {event => $_->{event}, delay => 0};
+          $gFSMEvents{$_->{event}} = 1;
         }
       }
       if (  $state->{onexit}{send} )
       {
         foreach (@{$state->{onexit}{send}})
         {
-          my $delay = 0;
-          $delay = $_->{delay} if ($_->{delay} );
-          my @param;
-          @param = $_->{param} if ( $_->{param} );
-          $gFSMEvents{$_->{event}}= {event => $_->{event}, delay => $delay, param => @param};
+          $gFSMEvents{$_->{event}}= 1;
         }
       }
 

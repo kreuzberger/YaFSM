@@ -5,9 +5,11 @@
         <qt:editorinfo scenegeometry="284.05;178.46;116.91;128.46;227.14;100" geometry="284.05;178.46;-167.14;-50;227.14;100"/>
         <transition type="external" event="AutoStart" target="stop">
             <script>model.onTriggerAutoStart();</script>
-            <send event="run" delay="1000ms"/>
+            <send event="run" delay="1000ms">
+                <param name="mCarType" expr="3"/>
+            </send>
         </transition>
-        <transition type="external" event="run" target="run">
+        <transition type="internal" event="run" target="run" cond="_event.data() == 3">
             <qt:editorinfo endTargetFactors="50.74;12.07"/>
             <script>model.onAutoStart();</script>
         </transition>
@@ -19,9 +21,9 @@
         </onexit>
     </state>
     <state id="run">
-        <qt:editorinfo scenegeometry="230.48;344.69;170.48;294.69;120;100" geometry="230.48;344.69;-60;-50;120;100"/>
+        <qt:editorinfo scenegeometry="230.48;344.69;76.98;294.69;213.50;100" geometry="230.48;344.69;-153.50;-50;213.50;100"/>
         <transition type="external" event="AutoEnd" target="FinalState">
-            <qt:editorinfo movePoint="0;1.02"/>
+            <qt:editorinfo movePoint="0;1.02" startTargetFactors="13.19;86.21"/>
             <script>model.onAutoEnd();</script>
         </transition>
         <onentry>
