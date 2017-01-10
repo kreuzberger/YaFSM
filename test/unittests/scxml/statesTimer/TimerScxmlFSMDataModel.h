@@ -16,6 +16,10 @@ public:
 
 };
 
+class Cancel
+{
+};
+
 class run
 {
 public:

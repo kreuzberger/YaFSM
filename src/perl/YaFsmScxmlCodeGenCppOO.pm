@@ -76,11 +76,11 @@ sub genSendEventImpl
   my $send = shift;
 
   my $eventPara = getEventPara($send);
-  print $fhS "    $send->{event} data;\n";
+  print $fhS "    $send->{event} data" . $send->{event} . ";\n";
   use Data::Dumper;
   foreach my $para ( @{$eventPara->{param}} )
   {
-    print $fhS "    data.$para->{name} = $para->{expr};\n" if( $para->{expr} );
+    print $fhS "    data" . $send->{event} . ".$para->{name} = $para->{expr};\n" if( $para->{expr} );
   }
 
   my $strID = "";
@@ -93,7 +93,7 @@ sub genSendEventImpl
   {
     YaFsm::printWarn("use of idlocation for send event not allowed!\n!");
   }
-  print $fhS "    " . $strID . "fsmImpl.sendEvent( \"$sendId\", data, $eventPara->{delay});\n";
+  print $fhS "    " . $strID . "fsmImpl.sendEvent( \"$sendId\", data" . $send->{event} . ", $eventPara->{delay});\n";
 
 }
 
@@ -103,7 +103,7 @@ sub genCancelEventImpl
   my $fhS = shift;
   my $cancel = shift;
 
-  print $fhS "  fsmImpl.cancelEvent(" . $cancel->{sendid} . ");\n";
+  print $fhS "  fsmImpl.cancelEvent(\"" . $cancel->{sendid} . "\");\n";
 }
 
 sub writeCodeFiles

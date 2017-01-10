@@ -26,9 +26,13 @@
             <qt:editorinfo movePoint="0;1.02" startTargetFactors="13.19;86.21"/>
             <script>model.onAutoEnd();</script>
         </transition>
+        <transition type="external" event="Cancel" target="stop">
+        </transition>
         <onentry>
             <script>model.onEnterRun();</script>
+            <send event="Cancel" delay="1s"/>
             <send event="AutoEnd" delay="2s"/>
+            <cancel sendid="run.Cancel" />
         </onentry>
         <onexit>
             <script>model.onExitRun();</script>
