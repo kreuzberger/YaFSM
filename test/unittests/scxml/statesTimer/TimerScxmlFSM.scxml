@@ -10,7 +10,7 @@
             </send>
         </transition>
         <transition type="internal" event="run" target="run" cond="_event.data() == 3">
-            <qt:editorinfo endTargetFactors="50.74;12.07"/>
+            <qt:editorinfo startTargetFactors="29.78;88.79" endTargetFactors="50.74;12.07"/>
             <script>model.onAutoStart();</script>
         </transition>
         <onentry>
@@ -27,12 +27,13 @@
             <script>model.onAutoEnd();</script>
         </transition>
         <transition type="external" event="Cancel" target="stop">
+            <qt:editorinfo startTargetFactors="81.04;12.93" endTargetFactors="61.66;89.66"/>
         </transition>
         <onentry>
             <script>model.onEnterRun();</script>
             <send event="Cancel" delay="1s"/>
             <send event="AutoEnd" delay="2s"/>
-            <cancel sendid="run.Cancel" />
+            <cancel sendid="run.Cancel"/>
         </onentry>
         <onexit>
             <script>model.onExitRun();</script>

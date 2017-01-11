@@ -75,6 +75,43 @@ sub setDefaultOpt
 #a -> b [lhead=cluster1]
 #}
 
+sub genCancelEventImpl
+{
+  my $fh = shift;
+  my $fhWallpaper = shift;
+  my $send = shift;
+
+  print $fh "-$_->{sendid}<br/>";
+  print $fhWallpaper "-$_->{sendid}<br/>";
+}
+
+
+
+sub genSendEventImpl
+{
+  my $fh = shift;
+  my $fhWallpaper = shift;
+  my $send = shift;
+
+  my $eventPara = YaFsmScxmlParser::getEventPara($send);
+  foreach my $para ( @{$eventPara->{param}} )
+  {
+  }
+  my $delay = "";
+  $delay = " (+$eventPara->{delay} ms)" if( $eventPara->{delay} );
+
+  if($gUseImages)
+  {
+    print $fh "<IMG SRC=\"images/enter.$YaFsmScxmlParser::gImageExt\"/>^$_->{event}$delay<br/>";
+    print $fhWallpaper "<IMG SRC=\"images/enter.$YaFsmScxmlParser::gImageExt\"/>^$_->{event}$delay<br/>";
+  }
+  else
+  {
+    print $fh "^$_->{event}$delay<br/>";
+    print $fhWallpaper "^$_->{event}$delay<br/>";
+  }
+}
+
 sub genDotFile
 {
   eval "use Data::Dumper";
@@ -97,9 +134,7 @@ sub genDotFile
   if($fh && $fhWallpaper)
   {
     print $fh "digraph G {\n";
-#    if(defined $parentName)
     {
- #     print $fhWallpaper "subgraph cluster".$parentName." {\n";
       print $fhWallpaper " subgraph cluster".$basename." {\n";
       print $fhWallpaper "  label = $basename\n";
     }
@@ -210,75 +245,97 @@ sub genDotFile
               {
                 #print $fh "<TR><TD>$gRArrow&nbsp;$_</TD></TR>";
                 #print $fhWallpaper "<TR><TD>$gRArrow&nbsp;$_</TD></TR>";
-                print $fh "$gRArrow&nbsp;$_<br/>";
-                print $fhWallpaper "$gRArrow&nbsp;$_<br/>";
+                print $fh "$gRArrow$_<br/>";
+                print $fhWallpaper "$gRArrow$_<br/>";
               }
             }
           }
-          if(defined $state->{tstartenter})
+#          if(defined $state->{tstartenter})
+#          {
+#            my @list = split(';',$state->{tstartenter});
+#            foreach (@list)
+#            {
+#              if($gUseImages)
+#              {
+#                #print $fh "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+#                print $fh "<IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
+#                print $fhWallpaper "<IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
+#              }
+#              else
+#              {
+#                #print $fh "<TR><TD>$gTStarttimer$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD>$gTStarttimer$_</TD></TR>";
+#                print $fh "$gTStart&nbsp;timer$_<br/>";
+#                print $fhWallpaper "$gTStart&nbsp;timer$_<br/>";
+#              }
+#            }
+#         }
+#          if(defined $state->{tstopenter})
+#          {
+#            my @list = split(';',$state->{tstopenter});
+#            foreach (@list)
+#            {
+#              if($gUseImages)
+#              {
+#                #print $fh "<TR><TD><IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+#                print $fh "<IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
+#                print $fhWallpaper "<IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
+#              }
+#              else
+#              {
+#                #print $fh "<TR><TD>$gTStop&nbsp;timer$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD>$gTStop&nbsp;timer$_</TD></TR>";
+#                print $fh "$gTStop&nbsp;timer$_<br/>";
+#                print $fhWallpaper "$gTStop&nbsp;timer$_<br/>";
+#              }
+#            }
+#          }
+
+          if(defined $state->{onentry}{raise})
           {
-            my @list = split(';',$state->{tstartenter});
-            foreach (@list)
+            foreach(@{$state->{onentry}{raise}})
             {
-              if($gUseImages)
-              {
-                #print $fh "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
-                print $fh "<IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
-                print $fhWallpaper "<IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
-              }
-              else
-              {
-                #print $fh "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
-                print $fh "$gTStart&nbsp;timer$_<br/>";
-                print $fhWallpaper "$gTStart&nbsp;timer$_<br/>";
-              }
+              genSendEventImpl($fh, $fhWallpaper, $_);
             }
           }
-          if(defined $state->{tstopenter})
+          if(defined $state->{onentry}{send})
           {
-            my @list = split(';',$state->{tstopenter});
-            foreach (@list)
+            foreach(@{$state->{onentry}{send}})
             {
-              if($gUseImages)
-              {
-                #print $fh "<TR><TD><IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
-                print $fh "<IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
-                print $fhWallpaper "<IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
-              }
-              else
-              {
-                #print $fh "<TR><TD>$gTStop&nbsp;timer$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD>$gTStop&nbsp;timer$_</TD></TR>";
-                print $fh "$gTStop&nbsp;timer$_<br/>";
-                print $fhWallpaper "$gTStop&nbsp;timer$_<br/>";
-              }
+              genSendEventImpl($fh, $fhWallpaper, $_);
+            }
+          }
+          if(defined $state->{onentry}{cancel})
+          {
+            foreach(@{$state->{onentry}{cancel}})
+            {
+              genCancelEventImpl($fh, $fhWallpaper, $_);
             }
           }
 
-          if(defined $state->{evententer})
-          {
-            my @list = split(';',$state->{evententer});
-            foreach (@list)
-            {
-              if($gUseImages)
-              {
-                #print $fh "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
-                print $fh "<IMG SRC=\"images/enter.$YaFsmScxmlParser::gImageExt\"/>^$_<br/>";
-                print $fhWallpaper "<IMG SRC=\"images/enter.$YaFsmScxmlParser::gImageExt\"/>^$_<br/>";
-              }
-              else
-              {
-                #print $fh "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
-                print $fh "^$_<br/>";
-                print $fhWallpaper "^$_<br/>";
-              }
-            }
-          }
+#          if(defined $state->{evententer})
+#          {
+#            my @list = split(';',$state->{evententer});
+#            foreach (@list)
+#            {
+#              if($gUseImages)
+#              {
+#                #print $fh "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+#                print $fh "<IMG SRC=\"images/enter.$YaFsmScxmlParser::gImageExt\"/>^$_<br/>";
+#                print $fhWallpaper "<IMG SRC=\"images/enter.$YaFsmScxmlParser::gImageExt\"/>^$_<br/>";
+#              }
+#              else
+#              {
+#                #print $fh "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
+#                print $fh "^$_<br/>";
+#                print $fhWallpaper "^$_<br/>";
+#              }
+#            }
+#          }
 
           print $fh "</TD></TR>";
           print $fhWallpaper "</TD></TR>";
@@ -309,75 +366,98 @@ sub genDotFile
               {
                 #print $fh "<TR><TD>$gLArrow&nbsp;$_</TD></TR>";
                 #print $fhWallpaper "<TR><TD>$gLArrow&nbsp;$_</TD></TR>";
-                print $fh "$gLArrow&nbsp;$_<br/>";
-                print $fhWallpaper "$gLArrow&nbsp;$_<br/>";
-              }
-            }
-          }
-          if(defined $state->{tstartexit})
-          {
-            my @list = split(';',$state->{tstartexit});
-            foreach (@list)
-            {
-              if($gUseImages)
-              {
-                #print $fh "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
-                print $fh "<IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
-                print $fhWallpaper "<IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
-              }
-              else
-              {
-                #print $fh "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
-                print $fh "$gTStart&nbsp;timer$_<br/>";
-                print $fhWallpaper "$gTStart&nbsp;timer$_<br/>";
-              }
-            }
-          }
-          if(defined $state->{tstopexit})
-          {
-            my @list = split(';',$state->{tstopexit});
-            foreach (@list)
-            {
-              if($gUseImages)
-              {
-                #print $fh "<TR><TD><IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_/TD></TR>";
-                print $fh "<IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
-                print $fhWallpaper "<IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
-              }
-              else
-              {
-                #print $fh "<TR><TD>$gTStop&nbsp;timer$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD>$gTStop&nbsp;timer$_</TD></TR>";
-                print $fh "$gTStop&nbsp;timer$_<br/>";
-                print $fhWallpaper "$gTStop&nbsp;timer$_<br/>";
+                print $fh "$gLArrow$_<br/>";
+                print $fhWallpaper "$gLArrow$_<br/>";
               }
             }
           }
 
-          if(defined $state->{eventexit})
+          if(defined $state->{onexit}{raise})
           {
-            my @list = split(';',$state->{eventexit});
-            foreach (@list)
+            foreach(@{$state->{onexit}{raise}})
             {
-              if($gUseImages)
-              {
-                #print $fh "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
-                print $fh "<IMG SRC=\"images/exit.$YaFsmScxmlParser::gImageExt\"/>^$_<br/>";
-                print $fhWallpaper "<IMG SRC=\"images/exit.$YaFsmScxmlParser::gImageExt\"/>^$_<br/>";
-              }
-              else
-              {
-                #print $fh "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
-                #print $fhWallpaper "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
-                print $fh "^$_<br/>";
-                print $fhWallpaper "^$_<br/>";
-              }
+              genSendEventImpl($fh, $fhWallpaper, $_);
             }
           }
+          if(defined $state->{onexit}{send})
+          {
+            foreach(@{$state->{onexit}{send}})
+            {
+              genSendEventImpl($fh, $fhWallpaper, $_);
+            }
+          }
+          if(defined $state->{onexit}{cancel})
+          {
+            foreach(@{$state->{onexit}{cancel}})
+            {
+              genCancelEventImpl($fh, $fhWallpaper, $_);
+            }
+          }
+
+#          if(defined $state->{tstartexit})
+#          {
+#            my @list = split(';',$state->{tstartexit});
+#            foreach (@list)
+#            {
+#              if($gUseImages)
+#              {
+#                #print $fh "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+#                print $fh "<IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
+#                print $fhWallpaper "<IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
+#              }
+#              else
+#              {
+#                #print $fh "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
+#                print $fh "$gTStart&nbsp;timer$_<br/>";
+#                print $fhWallpaper "$gTStart&nbsp;timer$_<br/>";
+#              }
+#            }
+#          }
+#          if(defined $state->{tstopexit})
+#          {
+#            my @list = split(';',$state->{tstopexit});
+#            foreach (@list)
+#            {
+#              if($gUseImages)
+#              {
+#                #print $fh "<TR><TD><IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_/TD></TR>";
+#                print $fh "<IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
+#                print $fhWallpaper "<IMG SRC=\"images/timerstop.$YaFsmScxmlParser::gImageExt\"/>$_<br/>";
+#              }
+#              else
+#              {
+#                #print $fh "<TR><TD>$gTStop&nbsp;timer$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD>$gTStop&nbsp;timer$_</TD></TR>";
+#                print $fh "$gTStop&nbsp;timer$_<br/>";
+#                print $fhWallpaper "$gTStop&nbsp;timer$_<br/>";
+#              }
+#            }
+#          }
+
+#          if(defined $state->{eventexit})
+#          {
+#            my @list = split(';',$state->{eventexit});
+#            foreach (@list)
+#            {
+#              if($gUseImages)
+#              {
+#                #print $fh "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD><IMG SRC=\"images/timerstart.$YaFsmScxmlParser::gImageExt\"/></TD><TD>$_</TD></TR>";
+#                print $fh "<IMG SRC=\"images/exit.$YaFsmScxmlParser::gImageExt\"/>^$_<br/>";
+#                print $fhWallpaper "<IMG SRC=\"images/exit.$YaFsmScxmlParser::gImageExt\"/>^$_<br/>";
+#              }
+#              else
+#              {
+#                #print $fh "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
+#                #print $fhWallpaper "<TR><TD>$gTStart&nbsp;timer$_</TD></TR>";
+#                print $fh "^$_<br/>";
+#                print $fhWallpaper "^$_<br/>";
+#              }
+#            }
+#          }
           print $fh "</TD></TR>";
           print $fhWallpaper "</TD></TR>";
           print $fh "</TABLE></FONT>";
@@ -398,11 +478,11 @@ sub genDotFile
       {
         if($gUseFilePath)
         {
-          print $fh "  color=grey, URL=\"$YaFsmScxmlParser::gFSMViewOutPath/$state->{id}.html\"";
+          print $fh " , color=grey, URL=\"$YaFsmScxmlParser::gFSMViewOutPath/$state->{id}.html\"";
         }
         else
         {
-          print $fh "  color=grey, URL=\"$state->{id}.html\"";
+          print $fh " , color=grey, URL=\"$state->{id}.html\"";
         }
       }
 
@@ -427,11 +507,11 @@ sub genDotFile
 
 
 
-          if ($YaFsmScxmlParser::gFSMTriggers{$trans->{event}})
-          {
-            print $fh "(" . YaFsm::xmlEscape($YaFsmScxmlParser::gFSMTriggers{$trans->{event}}) .")";
-            print $fhWallpaper "(" . YaFsm::xmlEscape($YaFsmScxmlParser::gFSMTriggers{$trans->{event}}).")";
-          }
+#          if ($YaFsmScxmlParser::gFSMTriggers{$trans->{event}})
+#          {
+#            print $fh "(" . YaFsm::xmlEscape($YaFsmScxmlParser::gFSMTriggers{$trans->{event}}) .")";
+#            print $fhWallpaper "(" . YaFsm::xmlEscape($YaFsmScxmlParser::gFSMTriggers{$trans->{event}}).")";
+#          }
           if($trans->{cond})
           {
             # add some extra space to get a better layout (egdge labes are not distored)
@@ -462,22 +542,41 @@ sub genDotFile
 
           if(YaFsmScxmlParser::hasTransitionEvents($trans))
           {
-            if(length($trans->{event}))
-            {
-  #            print $fh "<TR><TD><FONT color=\"grey\">^$trans->{event}</FONT></TD></TR>;";
-  #            print $fhWallpaper "<TR><TD><FONT color=\"grey\">^$trans->{event}</FONT></TD></TR>;";
-              my @eventArray = split(/;/,$trans->{event});
-              print $fh "<FONT color=\"grey\">";
-              print $fhWallpaper "<FONT color=\"grey\">";
-              foreach(@eventArray)
-              {
-                print $fh "^$_<br/>";
-                print $fhWallpaper "^$_<br/>";
-              }
-              print $fh "</FONT>";
-              print $fhWallpaper "</FONT>";
 
+            print $fh "<FONT color=\"grey\">";
+            print $fhWallpaper "<FONT color=\"grey\">";
+            foreach(@{$trans->{raise}})
+            {
+              genSendEventImpl($fh, $fhWallpaper, $_);
             }
+
+            foreach(@{$trans->{send}})
+            {
+              genSendEventImpl($fh, $fhWallpaper, $_);
+            }
+            foreach(@{$trans->{cancel}})
+            {
+              genCancelEventImpl( $fh, $fhWallpaper, $_ );
+            }
+
+            print $fh "</FONT>";
+            print $fhWallpaper "</FONT>";
+#            if(length($trans->{event}))
+#            {
+#  #            print $fh "<TR><TD><FONT color=\"grey\">^$trans->{event}</FONT></TD></TR>;";
+#  #            print $fhWallpaper "<TR><TD><FONT color=\"grey\">^$trans->{event}</FONT></TD></TR>;";
+#              my @eventArray = split(/;/,$trans->{event});
+#              print $fh "<FONT color=\"grey\">";
+#              print $fhWallpaper "<FONT color=\"grey\">";
+#              foreach(@eventArray)
+#              {
+#                print $fh "^$_<br/>";
+#                print $fhWallpaper "^$_<br/>";
+#              }
+#              print $fh "</FONT>";
+#              print $fhWallpaper "</FONT>";
+#
+#            }
           }
           print $fh "</TD></TR>";
           print $fhWallpaper "</TD></TR>";

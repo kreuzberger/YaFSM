@@ -44,30 +44,7 @@ if($YaFsm::gVerbose)
   }
 }
 
-sub getEventPara
-{
-  my $event = shift;
-  my $eventpara = { delay => 0 };
 
-  if($event->{delay} )
-  {
-    my $delay = $event->{delay};
-    $delay =~ s/(\d+)ms$/$1/ if( $delay =~ m/ms$/ );
-    if( $delay =~ m/s$/ )
-    {
-      $delay =~ s/(\d+)s$/$1/ ;
-      $delay = $delay * 1000;
-    }
-
-    $eventpara->{delay} = $delay;
-  }
-  if ($event->{param})
-  {
-    $eventpara->{param} = $event->{param} ;
-  }
-
-  return $eventpara;
-}
 
 sub genSendEventImpl
 {
@@ -75,9 +52,8 @@ sub genSendEventImpl
   my $sendId = shift;
   my $send = shift;
 
-  my $eventPara = getEventPara($send);
+  my $eventPara = YaFsmScxmlParser::getEventPara($send);
   print $fhS "    $send->{event} data" . $send->{event} . ";\n";
-  use Data::Dumper;
   foreach my $para ( @{$eventPara->{param}} )
   {
     print $fhS "    data" . $send->{event} . ".$para->{name} = $para->{expr};\n" if( $para->{expr} );
@@ -959,16 +935,6 @@ sub genStateImpl
 
     if(YaFsmScxmlParser::hasStateEnterActions($state))
     {
-      if(defined $state->{tstopenter})
-      {
-        my @str = split(/;/,$state->{tstopenter});
-        foreach(@str)
-        {
-          print $fhS "  fsmImpl.stopEventID( " . $YaFsmScxmlParser::gFSMName . "::" . "EVENT_" . $_ ." );\n";
-        }
-      }
-
-
       if(%YaFsmScxmlParser::gFSMDataModel && defined $state->{onentry}{script})
       {
         print $fhS ( "  " . $state->{id} ."_onEntry(fsmImpl.model());\n" );

@@ -229,6 +229,31 @@ sub hasSubStates
 }
 
 
+sub getEventPara
+{
+  my $event = shift;
+  my $eventpara = { delay => 0 };
+
+  if($event->{delay} )
+  {
+    my $delay = $event->{delay};
+    $delay =~ s/(\d+)ms$/$1/ if( $delay =~ m/ms$/ );
+    if( $delay =~ m/s$/ )
+    {
+      $delay =~ s/(\d+)s$/$1/ ;
+      $delay = $delay * 1000;
+    }
+
+    $eventpara->{delay} = $delay;
+  }
+  if ($event->{param})
+  {
+    $eventpara->{param} = $event->{param} ;
+  }
+
+  return $eventpara;
+}
+
 sub getMethodTokens
 {
   my $str = shift;
