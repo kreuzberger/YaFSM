@@ -47,6 +47,7 @@ our %gFSMTriggers;
 our @gFSMStates;
 our %gFSMEvents;
 our $gFSM;
+our $gFSMOrdered;
 our $gFSMName;
 our %gFSMMembers;
 our @gFSMIncludes;
@@ -165,6 +166,11 @@ sub readFSM
         $gFSMName = basename($gFSMFileName,'.scxml');
 
         $gFSM = $xmlContent;
+        $gFSMOrdered = $oXmlContent;
+
+        my $xpc = XML::LibXML::XPathContext->new($gFSMOrdered);
+        $xpc->registerNs('scxml', 'http://www.w3.org/2005/07/scxml');
+
 
         print Dumper($gFSM) if $YaFsm::gVerbose;
         YaFsm::printDbg("parsing Definitons (datamodel) ");
@@ -179,8 +185,7 @@ sub readFSM
           print FH " compound=true;\n";
           close(FH);
         }
-
-        parseFSM($gFSM,"root");# if $YaFsm::gVerbose;
+        parseFSM($gFSM, $gFSMOrdered->documentElement, "root");# if $YaFsm::gVerbose;
 
         YaFsm::printFatal("mismatch in state levels $gStateLevel") if $gStateLevel != -1;
 
@@ -423,9 +428,24 @@ sub scriptCodeToArray
 sub parseFSM
 {
   my $currRef = shift;
+  my $currRefOrdered = shift;
   my $parentName = shift;
   my $parentParentName=shift;
   $gStateLevel++;
+
+  if( defined $currRefOrdered )
+  {
+
+    foreach my $node ( $currRefOrdered->childNodes )
+    {
+      #YaFsm::printWarn("found ordered child node " . $node->nodeName );
+      #if($node->nodeName eq "state") { YaFsm::printWarn("found state with id ". $node->{id} ."\n"); }
+      #foreach my $final ( $node->findnodes('./final') )
+      #{
+      #  die("found ordered child node final " . $final->nodeName );
+      #}
+    }
+  }
 
   if($currRef->{final} )
   {
@@ -532,7 +552,7 @@ sub parseFSM
 
     if(hasSubStates($state))
     {
-      parseFSM($state, $state->{id}, $parentName);
+      parseFSM($state, undef, $state->{id}, $parentName);
     }
 
   }
