@@ -124,6 +124,13 @@ sub readFSM
       YaFsm::printFatal("Missing required package XML::Simple");
     }
 
+    eval "use XML::LibXML";
+    if($@)
+    {
+      YaFsm::printWarn $@;
+      YaFsm::printFatal("Missing required package XML::libXML");
+    }
+
     if($YaFsm::gVerbose)
     {
       eval "use Data::Dumper";
@@ -137,16 +144,12 @@ sub readFSM
 
     # create object
     my $xml = new XML::Simple (KeyAttr=>[]);
+    my $orderedXml = XML::LibXML->new();
 
     if( $filename =~ m/.*\.scxml/)
     {
-
-      # read XML file
-      # force array is useful for configurations that have only one entry and are not parsed into
-      # array by default. So we ensure that the buildcfg always is an array!
-      #  my $xmlContent = eval{$xml->XMLin("$filename", SuppressEmpty => '',ForceArray => qr/buildcfg$/)};
       my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => [qw(state transition datamodel data raise send param cancel )])};
-      #my $xmlContent = eval{$xml->XMLin("$filename", ForceArray => qr/state$/ )};
+      my $oXmlContent = eval{XML::LibXML->load_xml(location =>$filename)};
       if ($@)
       {
         # parse error messages look like this:
@@ -165,7 +168,7 @@ sub readFSM
 
         print Dumper($gFSM) if $YaFsm::gVerbose;
         YaFsm::printDbg("parsing Definitons (datamodel) ");
-        parseDefinitions($gFSM);# if $YaFsm::gVerbose;
+        parseDefinitions($oXmlContent);
         YaFsm::printDbg("parsing FSM");
         if ($gFSMGenView)
         {
@@ -543,26 +546,18 @@ sub parseFSM
 
 }
 
-
 sub parseDefinitions
 {
   my $currRef = shift;
+  #print $currRef->toString;
+  my $root = $currRef->documentElement();
 
+  my $strDataModel;
 
-  if( $currRef->{datamodel} )
+  $strDataModel = $root->getAttribute('datamodel') if ($root->getAttribute('datamodel'));
+  if( $strDataModel )
   {
-    my $strDataModel;
-    if(ref($currRef->{datamodel}) eq 'ARRAY')
-    {
-      YaFsm::printDbg("data model string $currRef->{datamodel}[0]");
-      $strDataModel = $currRef->{datamodel}[0];
-    }
-    else
-    {
-      YaFsm::printDbg("data model string $currRef->{datamodel}");
-      $strDataModel = $currRef->{datamodel};
-    }
-
+    YaFsm::printDbg("data model string $root->getAttribute('datamodel')") if( $strDataModel );
     my @modelInfo = split(/:/,$strDataModel);
     YaFsm::printDbg(@modelInfo);
 
@@ -584,28 +579,24 @@ sub parseDefinitions
     {
       YaFsm::printFatal("invalid datamodel definition string $strDataModel");
     }
+  }
 
+  # check for data members
 
-    # check for data members
-    if(ref($currRef->{datamodel}) eq 'ARRAY')
+  foreach my $data ($currRef->findnodes('/datamodel/data'))
+  {
+    #YaFsm::printDbg("data:  $data->{id} $data->{expr}");
+    if ( $data->{expr} )
     {
-      YaFsm::printDbg("data model string $currRef->{datamodel}[1]");
-      foreach my $data (@{$currRef->{datamodel}[1]{data}})
-      {
-        #YaFsm::printDbg("data:  $data->{id} $data->{expr}");
-        if ( $data->{expr} )
-        {
-          $gFSMMembers{$data->{id}}= { expr => $data->{expr}} ;
-        }
-        elsif ($data->{src})
-        {
-          my @memberInfo = split(/:/,$data->{src});
+      $gFSMMembers{$data->{id}}= { expr => $data->{expr}} ;
+    }
+    elsif ($data->{src})
+    {
+      my @memberInfo = split(/:/,$data->{src});
 
-          if($#memberInfo == 1 )
-          {
-            $gFSMMembers{$data->{id}}= { classname => $memberInfo[0], src => $memberInfo[1] } ;
-          }
-        }
+      if($#memberInfo == 1 )
+      {
+        $gFSMMembers{$data->{id}}= { classname => $memberInfo[0], src => $memberInfo[1] } ;
       }
     }
   }
