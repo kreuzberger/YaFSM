@@ -36,18 +36,6 @@ void YaFsmScxmlParser::setCodeOutDir(const std::string &codeOutDir)
 void YaFsmScxmlParser::init()
 {
 
-
-  //    my $fsmbasename=basename($fsmname,'.scxml');
-//    if((!defined $gFSMCodeOutPath))
-//    {
-//      $gFSMCodeOutPath= cwd() . '/' .lc($fsmbasename).'/code';
-//    }
-
-//    if($gFSMGenCode && (defined $gFSMCodeOutPath))
-//    {
-//      mkpath( $gFSMCodeOutPath, {verbose => 1, mode => 0755}) if (!(-d $gFSMCodeOutPath));
-//    }
-//  }
 }
 
 void YaFsmScxmlParser::readFSM()
@@ -59,6 +47,7 @@ void YaFsmScxmlParser::readFSM()
   if(elem)
   {
     parseDefinitions(elem);
+    parseFSM(elem);
   }
 
 }
@@ -112,48 +101,59 @@ void YaFsmScxmlParser::parseDefinitions(const tinyxml2::XMLElement* elem)
     YaFsm::printFatal(std::string("no name attribute in scxml definition"));
   }
 
-//      YaFsm::printDbg("data model string $root->getAttribute('datamodel')") if( $strDataModel );
-//      my @modelInfo = split(/:/,$strDataModel);
-//      YaFsm::printDbg(@modelInfo);
+  const tinyxml2::XMLElement* datamodelElem = elem->FirstChildElement("datamodel");
+  if(datamodelElem)
+  {
+    const tinyxml2::XMLElement* data = datamodelElem->FirstChildElement("data");
+    while( data )
+    {
+      const tinyxml2::XMLAttribute* id = data->FindAttribute("id");
+      if( id )
+      {
+        mMembers[id->Value()] = data;
+      }
+      data = data->NextSiblingElement("data");
+    }
+  }
+}
 
-//      if($#modelInfo == 2 )
-//      {
-//        if ("cplusplus" eq $modelInfo[0])
-//        {
-//          $gFSMDataModel{type}=$modelInfo[0];
-//          $gFSMDataModel{classname}=$modelInfo[1];
-//          $gFSMDataModel{headerfile}=$modelInfo[2];
-//        }
-//        else
-//        {
-//          YaFsm::printFatal("invalid datamodel type $modelInfo[0]");
-//        }
+void YaFsmScxmlParser::parseFSM( const tinyxml2::XMLElement* elem )
+{
+   const tinyxml2::XMLElement* final = elem->FirstChildElement( "final" );
+   if( final )
+   {
+     const char* id = final->Attribute("id");
+     if (id)
+     {
+       mStates[std::string(id)] = final;
+     }
+   }
 
-//      }
-//      else
-//      {
-//        YaFsm::printFatal("invalid datamodel definition string $strDataModel");
-//      }
-//    }
+   const tinyxml2::XMLElement* state = elem->FirstChildElement( "state" );
+   while(state)
+   {
+     const char* id = state->Attribute("id");
+     if( id )
+     {
+       mStates[std::string(id)] = state;
+     }
+     if(hasSubStates(state))
+     {
+       parseFSM(state);
+     }
+     state = state->NextSiblingElement("state");
+   }
 
-//    # check for data members
+}
 
-//    foreach my $data ($currRef->findnodes('/datamodel/data'))
-//    {
-//      #YaFsm::printDbg("data:  $data->{id} $data->{expr}");
-//      if ( $data->{expr} )
-//      {
-//        $gFSMMembers{$data->{id}}= { expr => $data->{expr}} ;
-//      }
-//      elsif ($data->{src})
-//      {
-//        my @memberInfo = split(/:/,$data->{src});
+bool YaFsmScxmlParser::hasSubStates(const tinyxml2::XMLElement* elem)
+{
+  bool bRet = false;
+  const tinyxml2::XMLElement* final = elem->FirstChildElement( "final" );
+  if( final ) bRet = true;
 
-//        if($#memberInfo == 1 )
-//        {
-//          $gFSMMembers{$data->{id}}= { classname => $memberInfo[0], src => $memberInfo[1] } ;
-//        }
-//      }
-//    }
-//  }
+  const tinyxml2::XMLElement* state = elem->FirstChildElement( "state" );
+  if( state ) bRet = true;
+
+  return bRet;
 }

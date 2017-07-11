@@ -4,6 +4,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 class YaFsmScxmlParser
 {
@@ -23,13 +24,18 @@ public:
   void init();
   void readFSM();
   void parseDefinitions(const tinyxml2::XMLElement* );
+  void parseFSM(const tinyxml2::XMLElement* );
 
 private:
+
+  bool hasSubStates( const tinyxml2::XMLElement* );
 
   std::string mFileName;
   bool        mGenCode = true;
   std::string mCodeOutDir;
   std::map< std::string, std::string >    mDataModel;
+  std::map< std::string, const tinyxml2::XMLElement* > mMembers;
+  std::map< std::string, const tinyxml2::XMLElement* > mStates;
 //  bool        mGenView;
 //  std::string mDotType;
 //  std::string mViewOutDir;
