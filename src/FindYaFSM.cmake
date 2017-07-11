@@ -121,5 +121,71 @@ macro (YAFSM_GENERATE outfiles fsmFile)
   QT4_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/FSMTimer.h ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/FSMEvent.h ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/ScxmlFSMEvent.h)
 endmacro( YAFSM_GENERATE )
 
+
+macro (YAFSM_GENERATE_CPP outfiles fsmFile)
+
+  set(options)
+  set(oneValueArgs OUTPUT_DIRECTORY )
+  set(multiValueArgs  )
+
+  cmake_parse_arguments(YAFSM_OPTIONS  "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  if( "${YAFSM_OPTIONS_OUTPUT_DIRECTORY}" STREQUAL "" )
+    set( YAFSM_OPTIONS_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}" )
+  endif()
+
+  get_filename_component( fsmFileAbsolute ${fsmFile} ABSOLUTE )
+  get_filename_component( fsm ${fsmFile} NAME_WE )
+  set(outfile ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/I${fsm}.h
+             ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/I${fsm}State.h
+             ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fsm}.h
+             ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fsm}StateBase.h
+             ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fsm}StateImpl.h
+             ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fsm}StateImpl.cpp
+  )
+
+  set(fileCode FSMTimer.h
+               FSMTimer.cpp
+               FSMEvent.h
+               FSMEvent.cpp
+               ScxmlFSMEvent.h
+               ScxmlFSMEvent.cpp
+  )
+  set(fileIfc IFSMTimer.h
+              IFSMTimerCB.h
+              IFSMEvent.h
+              IFSMEventCB.h
+              IScxmlFSMEvent.h
+              IScxmlFSMEventCB.h
+  )
+
+  add_custom_command( OUTPUT ${outfile}
+    COMMAND $<TARGET_FILE:yafsmgen> --fsm=${fsmFileAbsolute}  --gencode --outcode=${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code
+    DEPENDS ${fsmFileAbsolute} ${YAFSM_INCLUDE_DIRS}
+  )
+
+#  foreach ( file ${fileCode} )
+#    add_custom_command(
+#    OUTPUT ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${file}
+#    COMMAND ${CMAKE_COMMAND} -E copy ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/qt4/${file}  ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/
+#    )
+#   set( ${outfiles} ${${outfiles}} ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${file})
+#  endforeach( file )
+
+#  foreach ( fileI ${fileIfc} )
+#    add_custom_command(
+#      OUTPUT ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fileI}
+#      COMMAND ${CMAKE_COMMAND} -E copy ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/inc/${fileI}  ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code
+#      DEPENDS ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/inc/${fileI}
+#    )
+#    set( ${outfiles} ${${outfiles}} ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fileI})
+#  endforeach( fileI )
+
+  set( ${outfiles} ${${outfiles}} ${outfile})
+#  INCLUDE_DIRECTORIES( ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code )
+#  QT4_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/FSMTimer.h ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/FSMEvent.h ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/ScxmlFSMEvent.h)
+endmacro( YAFSM_GENERATE_CPP )
+
+
+
 #mark_as_advanced( YAFSM_INCLUDE_DIRS )
 

@@ -19,6 +19,7 @@ enable_testing()
 include(CTest)
 
 
+include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 #ADD_DEFINITIONS( ${QT_DEFINITIONS} )
 add_subdirectory(src)
 add_subdirectory(test)
