@@ -2,6 +2,8 @@
 #
 #  USE_YAFSM               - have the yafsmgen command found
 
+include(CMakeParseArguments)
+
 
 if( NOT "${YAFSM_SCRIPT}" STREQUAL "" AND NOT "${YAFSM_SCRIPT}" STREQUAL "YAFSM_SCRIPT-NOTFOUND")
   set( YAFSM_FOUND true )
@@ -52,61 +54,71 @@ set( YAFSM_USE_FILE ${CMAKE_CURRENT_LIST_DIR}/FindYaFSM.cmake)
 if( YAFSM_FOUND )
  get_filename_component( YAFSM_INCLUDE_DIR ${YAFSM_SCRIPT} DIRECTORY )
  set( YAFSM_INCLUDE_DIRS ${YAFSM_INCLUDE_DIR} )
- set( YAFSM_COMMAND "${PERL_EXECUTABLE} -I${YAFSM_INCLUDE_DIR} -f ${YAFSM_SCRIPT}")
+endif()
 
- endif()
+macro (YAFSM_GENERATE outfiles fsmFile)
 
-macro (YAFSM_GENERATE outfiles)
-  foreach( it ${ARGN})
-   get_filename_component( it ${it} ABSOLUTE )
-   get_filename_component( fsm ${it} NAME_WE )
-   set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/I${fsm}.h
-               ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/I${fsm}State.h
-               ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fsm}.h
-               ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fsm}StateBase.h
-               ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fsm}StateImpl.h
-               ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fsm}StateImpl.cpp
-   )
+  set(options)
+  set(oneValueArgs OUTPUT_DIRECTORY )
+  set(multiValueArgs  )
 
-   set(fileCode FSMTimer.h
-                FSMTimer.cpp
-                FSMEvent.h
-                FSMEvent.cpp
-   )
-   set(fileIfc  IFSMTimer.h
-                IFSMTimerCB.h
-                IFSMEvent.h
-                IFSMEventCB.h
-   )
+  cmake_parse_arguments(YAFSM_OPTIONS  "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  if( "${YAFSM_OPTIONS_OUTPUT_DIRECTORY}" STREQUAL "" )
+    set( YAFSM_OPTIONS_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}" )
+  endif()
 
-    add_custom_command( OUTPUT ${outfile}
-      #COMMAND perl -I${YaFSM_GENERATOR_SOURCE_DIR} -f ${YaFSM_GENERATOR_SOURCE_DIR}/YaFsm.pl --fsm=${it}  --gendot --gendsc --gencode --verbose --outdot=${CMAKE_CURRENT_BINARY_DIR}/${fsm}/dot --outdsc=${CMAKE_CURRENT_BINARY_DIR}/${fsm}/dsc --outcode=${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
-      COMMAND ${YAFSM_COMMAND} --fsm=${it}  --genview --gencode --outview=${CMAKE_CURRENT_BINARY_DIR}/${fsm}/view --outcode=${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
-      #ARGS -o ${outfile} ${it}
-      DEPENDS ${it} ${YAFSM_INCLUDE_DIRS} )
-      #COMMENT "Generating FSM ${FSM_SRC}"
-    foreach ( file ${fileCode} )
+  get_filename_component( fsmFileAbsolute ${fsmFile} ABSOLUTE )
+  get_filename_component( fsm ${fsmFile} NAME_WE )
+  set(outfile ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/I${fsm}.h
+             ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/I${fsm}State.h
+             ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fsm}.h
+             ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fsm}StateBase.h
+             ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fsm}StateImpl.h
+             ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fsm}StateImpl.cpp
+  )
+
+  set(fileCode FSMTimer.h
+               FSMTimer.cpp
+               FSMEvent.h
+               FSMEvent.cpp
+               ScxmlFSMEvent.h
+               ScxmlFSMEvent.cpp
+  )
+  set(fileIfc IFSMTimer.h
+              IFSMTimerCB.h
+              IFSMEvent.h
+              IFSMEventCB.h
+              IScxmlFSMEvent.h
+              IScxmlFSMEventCB.h
+  )
+
+  add_custom_command( OUTPUT ${outfile}
+    COMMAND ${CMAKE_COMMAND} -E echo ${PERL_EXECUTABLE} -I${YAFSM_INCLUDE_DIR} -f ${YAFSM_SCRIPT} --fsm=${fsmFileAbsolute}  --genview --gencode --outview=${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/view --outcode=${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code
+    COMMAND ${PERL_EXECUTABLE} -I${YAFSM_INCLUDE_DIR} -f ${YAFSM_SCRIPT} --fsm=${fsmFileAbsolute}  --genview --gencode --outview=${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/view --outcode=${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code
+    #ARGS -o ${outfile} ${fsmFile}
+    DEPENDS ${fsmFileAbsolute} ${YAFSM_INCLUDE_DIRS}
+  )
+  #COMMENT "Generating FSM ${FSM_SRC}"
+  foreach ( file ${fileCode} )
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${file}
-      COMMAND ${CMAKE_COMMAND} -E copy ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/qt4/${file}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
-      DEPENDS ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/qt4/${file}
+    OUTPUT ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${file}
+    COMMAND ${CMAKE_COMMAND} -E copy ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/qt4/${file}  ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/
     )
-    set( ${outfiles} ${${outfiles}} ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${file})
-    endforeach( file )
+    set( ${outfiles} ${${outfiles}} ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${file})
+  endforeach( file )
 
-    foreach ( fileI ${fileIfc} )
+  foreach ( fileI ${fileIfc} )
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fileI}
-      COMMAND ${CMAKE_COMMAND} -E copy ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/inc/${fileI}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
+      OUTPUT ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fileI}
+      COMMAND ${CMAKE_COMMAND} -E copy ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/inc/${fileI}  ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code
       DEPENDS ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/inc/${fileI}
     )
-    set( ${outfiles} ${${outfiles}} ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fileI})
-    endforeach( fileI )
+    set( ${outfiles} ${${outfiles}} ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fileI})
+  endforeach( fileI )
 
   set( ${outfiles} ${${outfiles}} ${outfile})
-  INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code )
-  QT4_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/FSMTimer.h ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/FSMEvent.h)
- endforeach( it )
+  INCLUDE_DIRECTORIES( ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code )
+  QT4_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/FSMTimer.h ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/FSMEvent.h ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/ScxmlFSMEvent.h)
 endmacro( YAFSM_GENERATE )
 
 #mark_as_advanced( YAFSM_INCLUDE_DIRS )

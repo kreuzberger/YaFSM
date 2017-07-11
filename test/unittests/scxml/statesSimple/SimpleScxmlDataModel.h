@@ -15,6 +15,11 @@ class end
 {
 };
 
+class self_runner
+{
+
+};
+
 class SimpleScxmlFSMDataModel: public QObject
 {
   Q_OBJECT

@@ -14,7 +14,7 @@
         </onentry>
     </state>
     <state id="run">
-        <qt:editorinfo geometry="428.29;107.77;-80;-100.21;421;626.21" scenegeometry="428.29;107.77;348.29;7.56;421;626.21"/>
+        <qt:editorinfo geometry="428.29;106.66;-104.57;-100.21;445.57;626.21" scenegeometry="428.29;106.66;323.72;6.45;445.57;626.21"/>
         <initial>
             <qt:editorinfo geometry="0;0;-20;-20;40;40" scenegeometry="428.29;107.77;408.29;87.77;40;40"/>
             <transition target="running"/>
@@ -24,7 +24,7 @@
             <script>model.onEnd();</script>
         </transition>
         <state id="running">
-            <qt:editorinfo geometry="68.93;102.42;-60;-50;120;100" scenegeometry="497.22;210.19;437.22;160.19;120;100"/>
+            <qt:editorinfo geometry="68.93;102.42;-153.50;-50;213.50;100" scenegeometry="497.22;210.19;343.72;160.19;213.50;100"/>
             <onentry>
                 <script>model.onEnterRunning();</script>
                 <raise event="end"/>
@@ -32,6 +32,7 @@
             <onexit>
                 <script>model.onExitRunning();</script>
             </onexit>
+            <transition type="internal" event="self_runner"/>
         </state>
         <onentry>
             <script>model.onEnterRun();</script>

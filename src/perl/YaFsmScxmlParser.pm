@@ -470,6 +470,11 @@ sub parseFSM
     {
       if($trans->{event})
       {
+        if( !defined($trans->{target}))
+        {
+          # this is a self transition!
+          $trans->{target} = $state->{id};
+        }
         YaFsm::printDbg("transition on state $parentName: startstate $state->{id}, endstate $trans->{target}, trigger $trans->{event}");
         YaFsm::printDbg("trigger: $trans->{event} ()");
         $gFSMTriggers{$trans->{event}}= 1;
