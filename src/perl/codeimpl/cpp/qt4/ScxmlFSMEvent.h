@@ -1,5 +1,4 @@
-#ifndef SCXMLFSMEVENT_H
-#define SCXMLFSMEVENT_H
+#pragma once
 
 #include "IScxmlFSMEvent.h"
 #include "IScxmlFSMEventCB.h"
@@ -53,5 +52,4 @@ private:
 };
 
 
-#endif
  

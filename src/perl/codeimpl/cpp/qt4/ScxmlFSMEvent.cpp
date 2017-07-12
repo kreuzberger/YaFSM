@@ -25,7 +25,6 @@ ScxmlFSMEvent::ScxmlFSMEvent( IScxmlFSMEventCB& handler)
 : QObject()
 , IScxmlFSMEvent()
 , mCbHandler( handler )
-//, mEventMap()
 , mActiveEventMap()
 {
 

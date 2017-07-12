@@ -1,5 +1,4 @@
-#ifndef ISCXMLFSMEVENTCB_H
-#define ISCXMLFSMEVENTCB_H
+#pragma once
 
 class IScxmlFSMEventCB
 {
@@ -10,6 +9,4 @@ class IScxmlFSMEventCB
   virtual void processTimerEventID(int iEventID, int id) = 0 ;
 };
 
-
-#endif
  

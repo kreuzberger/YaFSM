@@ -75,18 +75,10 @@ macro (YAFSM_GENERATE outfiles fsmFile)
              ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fsm}StateImpl.cpp
   )
 
-  set(fileCode FSMTimer.h
-               FSMTimer.cpp
-               FSMEvent.h
-               FSMEvent.cpp
-               ScxmlFSMEvent.h
+  set(fileCode ScxmlFSMEvent.h
                ScxmlFSMEvent.cpp
   )
-  set(fileIfc IFSMTimer.h
-              IFSMTimerCB.h
-              IFSMEvent.h
-              IFSMEventCB.h
-              IScxmlFSMEvent.h
+  set(fileIfc IScxmlFSMEvent.h
               IScxmlFSMEventCB.h
   )
 
@@ -114,7 +106,7 @@ macro (YAFSM_GENERATE outfiles fsmFile)
 
   set( ${outfiles} ${${outfiles}} ${outfile})
   INCLUDE_DIRECTORIES( ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code )
-  QT4_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/FSMTimer.h ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/FSMEvent.h ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/ScxmlFSMEvent.h)
+  QT4_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/ScxmlFSMEvent.h)
 endmacro( YAFSM_GENERATE )
 
 

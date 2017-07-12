@@ -1,5 +1,4 @@
-#ifndef ISCXMLFSMEVENT_H
-#define ISCXMLFSMEVENT_H
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -18,5 +17,4 @@ class IScxmlFSMEvent
 };
 
 
-#endif
- 
+

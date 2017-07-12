@@ -4,7 +4,6 @@ macro (YAFSM_GENERATE outfiles)
   foreach( it ${ARGN})
     get_filename_component( it ${it} ABSOLUTE )
     get_filename_component( fsm ${it} NAME_WE )
-#   set(outfile ${CMAKE_CURRENT_BINARY_DIR}/code/I${outfile}.h ${CMAKE_CURRENT_BINARY_DIR}/code/${outfile}.h ${CMAKE_CURRENT_BINARY_DIR}/code/${outfile}StateBase.h ${CMAKE_CURRENT_BINARY_DIR}/code/I${outfile}.h${CMAKE_CURRENT_BINARY_DIR}/code/I${outfile}State.h)
     set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/I${fsm}State.h
                ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fsm}.h
                ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fsm}StateBase.h
@@ -12,18 +11,10 @@ macro (YAFSM_GENERATE outfiles)
                ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fsm}StateImpl.cpp
     )
 
-    set(fileCode FSMTimer.h
-                FSMTimer.cpp
-                FSMEvent.h
-                FSMEvent.cpp
-                ScxmlFSMEvent.h
-                ScxmlFSMEvent.cpp
+    set(fileCode ScxmlFSMEvent.h
+                 ScxmlFSMEvent.cpp
     )
-    set(fileIfc  IFSMTimer.h
-                IFSMTimerCB.h
-                IFSMEvent.h
-                IFSMEventCB.h
-                IScxmlFSMEvent.h
+    set(fileIfc IScxmlFSMEvent.h
                 IScxmlFSMEventCB.h
     )
 
@@ -51,7 +42,7 @@ macro (YAFSM_GENERATE outfiles)
 
     set( ${outfiles} ${${outfiles}} ${outfile})
     INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code )
-    QT4_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/FSMTimer.h ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/FSMEvent.h ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/ScxmlFSMEvent.h)
+    QT4_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/ScxmlFSMEvent.h)
   endforeach( it )
 endmacro( YAFSM_GENERATE )
 
