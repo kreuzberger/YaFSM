@@ -6,7 +6,7 @@ use Cwd;
 use File::Path;
 use File::Basename;
 use File::Copy;
-use YaFsmCodeGen;
+use YaFsmScxmlCodeGenCppOO;
 use YaFsmScxmlViewerGen;
 use FindBin;
 
@@ -191,7 +191,7 @@ sub readFSM
 
         YaFsmScxmlViewerGen::writeDscFile()  if( $gFSMGenView);
         # write out code files
-        YaFsmCodeGen::writeCodeFiles($gFSMName, 1)  if( $gFSMGenCode);
+        YaFsmScxmlCodeGenCppOO::writeCodeFiles($gFSMName)  if( $gFSMGenCode);
 
 
         if ($gFSMGenView)

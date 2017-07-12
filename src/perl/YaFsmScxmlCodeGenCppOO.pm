@@ -84,11 +84,8 @@ sub genCancelEventImpl
 
 sub writeCodeFiles
 {
-  #chdir($YaFsmScxmlParser::gFSMDscOutPath);
   my $FSMName = shift;
 
-  outInterfaceFSMActionHandlerHeader($FSMName, $YaFsmScxmlParser::gFSMCodeOutPath . '/' . "I$FSMName" . "ActionHandler.h"); #the fsm action handler interface
-  outInterfaceFSMHeader($FSMName, $YaFsmScxmlParser::gFSMCodeOutPath . '/' . "I$FSMName" . ".h"); # fsm interface for triggering fsm
   outInterfaceFSMStateHeader($FSMName, $YaFsmScxmlParser::gFSMCodeOutPath . '/' . "I$FSMName" . "State.h"); # fsm interface for states
   my @genTransitions;
   outFSMStates($FSMName, $YaFsmScxmlParser::gFSMCodeOutPath . '/' . "$FSMName" . "StateImpl",\@genTransitions); # fsm header file
@@ -98,41 +95,8 @@ sub writeCodeFiles
   outFSMStateBaseHeader($FSMName, $YaFsmScxmlParser::gFSMCodeOutPath . '/' . "$FSMName" . "StateBase.h"); # fsm base class for state implementation
 }
 
-sub outInterfaceFSMActionHandlerHeader
-{
-  my $FSMName = shift;
-  my $outFilePath = shift;
-  #my @actions = shift;
-  open ( my $fh, ">$outFilePath") or YaFsm::printFatal "cannot open file $outFilePath for writing";
 
 
-  print $fh "#ifndef I" .uc($FSMName). "ACTIONHANDLER_H\n";
-  print $fh "#define I" .uc($FSMName). "ACTIONHANDLER_H\n";
-  print $fh "//includes by xml definition\n";
-  foreach my $file ( @YaFsmScxmlParser::gFSMIncludes )
-  {
-    print $fh "#include \"$file\"\n";
-  }
-
-  print $fh "#endif\n";
-
-  close( $fh );
-}
-
-
-sub outInterfaceFSMHeader
-{
-  my $FSMName = shift;
-  my $outFilePath = shift;
-  #my @actions = shift;
-  open ( my $fh, ">$outFilePath") or YaFsm::printFatal "cannot open file $outFilePath for writing";
-  print $fh "#ifndef I" . uc($FSMName) . "_H\n";
-  print $fh "#define I" . uc($FSMName) . "_H\n";
-  print $fh "\n";
-
-  print $fh "#endif\n";
-  close( $fh );
-}
 
 sub outInterfaceFSMStateHeader
 {
@@ -143,17 +107,10 @@ sub outInterfaceFSMStateHeader
   print $fh "#ifndef I" . uc($FSMName) . "STATE_H\n";
   print $fh "#define I" . uc($FSMName) . "STATE_H\n";
 
-  foreach my $file ( @YaFsmScxmlParser::gFSMIncludes )
-  {
-    print $fh "#include \"$file\"\n";
-  }
-
   if( %YaFsmScxmlParser::gFSMDataModel )
   {
     print $fh ("#include \"" . $YaFsmScxmlParser::gFSMDataModel{headerfile} . "\"\n");
   }
-
-
 
   print $fh "\n";
   print $fh "class " . $FSMName . ";\n";
@@ -223,7 +180,6 @@ sub outFSMHeader
   print $fh "#ifndef _" . uc($FSMName) . "_H\n";
   print $fh "#define _" . uc($FSMName) . "_H\n";
 
-  print $fh "#include \"I" . $FSMName . ".h\"\n";
   print $fh "#include \"" . $FSMName . "StateImpl.h\"\n";
 
   if( %YaFsmScxmlParser::gFSMDataModel )
@@ -257,7 +213,7 @@ sub outFSMHeader
   print $fh "class " . $FSMName . "StateBase;\n";
 
   # print $fh "#include \"ProUnit_" . $FSMName . "_.h\"\n";
-#  print $fh "\nclass " . $FSMName . ": public I" . $FSMName . "\n";
+#  print $fh "\nclass " . $FSMName . "\n";
   print $fh "\nclass " . $FSMName . "\n";
   print $fh " : public IScxmlFSMEventCB\n";
 #  print $fh " , public IScxmlFSMEvent\n";
@@ -625,12 +581,6 @@ sub outFSMStateBaseHeader
   print $fh "#define _" . uc($FSMName) . "StateBase_H\n";
   print $fh "\n";
   print $fh "#include \"I" . $FSMName . "State.h\"\n";
-
-  print $fh "//includes by xml definition\n";
-  foreach my $file ( @YaFsmScxmlParser::gFSMIncludes )
-  {
-    print $fh "#include \"$file\"\n";
-  }
 
   print $fh "#include <string>\n";
   print $fh "#include <iostream>\n";

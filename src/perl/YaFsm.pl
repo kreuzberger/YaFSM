@@ -8,7 +8,6 @@ use Getopt::Long;
 use Pod::Usage;
 
 use YaFsm;
-use YaFsmParser;
 use YaFsmScxmlParser;
 
 my $gFSMFileName;
@@ -52,31 +51,16 @@ if($optOk)
   }
   else
   {
-    if( $gFSMFileName =~ m/.*\.xml$/ )
-    {
-      $YaFsmParser::gFSMFileName = $gFSMFileName;
-      $YaFsmParser::gFSMGenView = $gFSMGenView;
-      $YaFsmParser::gFSMGenDotType = $gFSMGenDotType;
-      $YaFsmParser::gFSMViewOutPath = $gFSMViewOutPath;
-      $YaFsmParser::gFSMGenCode = $gFSMGenCode;
-      $YaFsmParser::gFSMCodeOutPath = $gFSMCodeOutPath;
+    $YaFsmScxmlParser::gFSMFileName = $gFSMFileName;
+    $YaFsmScxmlParser::gFSMGenCode = $gFSMGenCode;
+    $YaFsmScxmlParser::gFSMCodeOutPath = $gFSMCodeOutPath;
 
-      YaFsmParser::init($YaFsmParser::gFSMFileName);
-      YaFsmParser::readFSM($YaFsmParser::gFSMFileName);
-    }
-    else
-    {
-      $YaFsmScxmlParser::gFSMFileName = $gFSMFileName;
-      $YaFsmScxmlParser::gFSMGenCode = $gFSMGenCode;
-      $YaFsmScxmlParser::gFSMCodeOutPath = $gFSMCodeOutPath;
+    $YaFsmScxmlParser::gFSMGenView = $gFSMGenView;
+    $YaFsmScxmlParser::gFSMGenDotType = $gFSMGenDotType;
+    $YaFsmScxmlParser::gFSMViewOutPath = $gFSMViewOutPath;
 
-      $YaFsmScxmlParser::gFSMGenView = $gFSMGenView;
-      $YaFsmScxmlParser::gFSMGenDotType = $gFSMGenDotType;
-      $YaFsmScxmlParser::gFSMViewOutPath = $gFSMViewOutPath;
-
-      YaFsmScxmlParser::init($gFSMFileName);
-      YaFsmScxmlParser::readFSM($gFSMFileName);
-    }
+    YaFsmScxmlParser::init($gFSMFileName);
+    YaFsmScxmlParser::readFSM($gFSMFileName);
   }
 
 }
