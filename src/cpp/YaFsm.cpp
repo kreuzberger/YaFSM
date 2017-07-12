@@ -3,6 +3,12 @@
 #include <sstream>
 #include <iostream>
 
+#ifdef __unix__
+   std::string YaFsm::sep = "/";
+#else
+std::string YaFsm::sep = "\\";
+#endif
+
 YaFsm::YaFsm()
 {
 }

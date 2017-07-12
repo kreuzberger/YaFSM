@@ -29,13 +29,18 @@ public:
 private:
 
   bool hasSubStates( const tinyxml2::XMLElement* );
+  void checkSubEvents( const tinyxml2::XMLElement* );
+  void writeInterfaceFSMStateHeader();
+  void writeFSMStateBaseHeader();
 
   std::string mFileName;
-  bool        mGenCode = true;
   std::string mCodeOutDir;
   std::map< std::string, std::string >    mDataModel;
   std::map< std::string, const tinyxml2::XMLElement* > mMembers;
   std::map< std::string, const tinyxml2::XMLElement* > mStates;
+  std::map< std::string, int > mTriggers;
+  std::map< std::string, int > mEvents;
+
 //  bool        mGenView;
 //  std::string mDotType;
 //  std::string mViewOutDir;

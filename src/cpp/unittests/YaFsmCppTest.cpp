@@ -13,6 +13,7 @@ void YaFsmCppTest::runtests()
   testDataModelNode();
   testRootStates();
   testSubStates();
+  testEvents();
 }
 
 void YaFsmCppTest::test( const std::string& actual, const std::string expected, const std::string& testname)
@@ -165,4 +166,40 @@ void YaFsmCppTest::testSubStates()
   dataElem =  parser.mStates["FinalState"];
   test(dataElem != nullptr, "Test final state");
 
+}
+
+void YaFsmCppTest::testEvents()
+{
+  std::string xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n \
+                     <scxml xmlns=\"http://www.w3.org/2005/07/scxml\" version=\"1.0\" binding=\"early\" xmlns:qt=\"http://www.qt.io/2015/02/scxml-ext\" name=\"SimpleScxmlFSM\" qt:editorversion=\"4.2.0\" datamodel=\"cplusplus:SimpleScxmlFSMDataModel:SimpleScxmlDataModel.h\" initial=\"stop\">\n \
+                     <state id=\"stop\">\n\
+                       <state id=\"stop_stop\">\n\
+                        <transition type=\"internal\" event=\"end\" target=\"FinalState\">\
+                           <raise event=\"event1\"/>\
+                           <send event=\"event3\"/>\
+                           <raise event=\"event2\"/>\
+                        </transition>\
+                        <onentry>\
+                          <raise event=\"entry\"/>\
+                        </onentry>\
+                        <onexit>\
+                          <send event=\"go1\"/>\
+                          <raise event=\"go2\"/>\
+                          <send event=\"go3\"/>\
+                        </onexit>\
+                       </state>\n\
+                     </state>\n\
+                     </scxml>";
+  YaFsmScxmlParser parser;
+  tinyxml2::XMLDocument doc;
+  tinyxml2::XMLError error =  doc.Parse(xml.c_str());
+  test(error, tinyxml2::XML_SUCCESS,"parsing xml in event test");
+  tinyxml2::XMLElement* elem = doc.FirstChildElement( "scxml" );
+  if(elem)
+  {
+    parser.parseDefinitions(elem);
+    parser.parseFSM(elem);
+  }
+  test( parser.mTriggers.size(),1,"Test trigger event parsing in transitions and states");
+  test( parser.mEvents.size(),7,"Test event parsing in transitions and states");
 }

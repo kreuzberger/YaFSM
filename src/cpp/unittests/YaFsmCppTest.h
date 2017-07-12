@@ -18,6 +18,7 @@ private:
   void testDataModelNode();
   void testRootStates();
   void testSubStates();
+  void testEvents();
 
 };
 

@@ -8,7 +8,6 @@ void printHelp()
   fprintf(stderr, "\nOptions:\n");
   fprintf(stderr, "  --fsm <scxml>    scml file name\n");
   fprintf(stderr, "  --outcode <dir>  generated code directory\n");
-  fprintf(stderr, "  --gencode        generate code (default true)\n");
 }
 
 bool parseArgs( YaFsmScxmlParser& parser, int& argc, char** argv)
@@ -23,14 +22,10 @@ bool parseArgs( YaFsmScxmlParser& parser, int& argc, char** argv)
       parser.setFileName(fsm);
       idx++;
     }
-    else if(std::string(argv[idx]) == std::string("--gencode"))
-    {
-      parser.setGenCode(true);
-    }
     else if(std::string(argv[idx]) == std::string("--outcode"))
     {
       std::string codePath = argv[idx+1];
-      parser.setFileName(codePath);
+      parser.setCodeOutDir(codePath);
     }
     else if(std::string(argv[idx]) == std::string("--help"))
     {
@@ -59,6 +54,7 @@ int main(int argc, char** argv)
   YaFsmScxmlParser parser;
 
   bOk = parseArgs(parser,argc, argv);
+  parser.readFSM();
 
   return bOk;
 }
