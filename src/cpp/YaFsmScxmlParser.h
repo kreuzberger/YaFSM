@@ -1,5 +1,5 @@
-#ifndef YAFSMSCXMLPARSER_H
-#define YAFSMSCXMLPARSER_H
+#pragma once
+
 #include "tinyxml/tinyxml2.h"
 
 #include <string>
@@ -28,10 +28,20 @@ public:
 
 private:
 
+  class Actions
+  {
+  public:
+    std::string name;
+
+  };
+
   bool hasSubStates( const tinyxml2::XMLElement* );
   void checkSubEvents( const tinyxml2::XMLElement* );
   void writeInterfaceFSMStateHeader();
   void writeFSMStateBaseHeader();
+  void writeFSMStates(const tinyxml2::XMLElement*);
+  void writeFSMStates(std::ofstream& header, std::ofstream& source, const tinyxml2::XMLElement*, const std::string& parentName);
+  void genStateImpl(std::ofstream& header, std::ofstream& source, const tinyxml2::XMLElement*, const std::string& parentName);
 
   std::string mFileName;
   std::string mCodeOutDir;
@@ -40,11 +50,4 @@ private:
   std::map< std::string, const tinyxml2::XMLElement* > mStates;
   std::map< std::string, int > mTriggers;
   std::map< std::string, int > mEvents;
-
-//  bool        mGenView;
-//  std::string mDotType;
-//  std::string mViewOutDir;
-
 };
-
-#endif // YAFSMSCXMLPARSER_H
