@@ -21,19 +21,13 @@ public:
   std::string codeOutDir() const;
   void setCodeOutDir(const std::string &codeOutDir);
 
+  void setVerbose( bool verbose ) { mVerbose = verbose; }
   void init();
   void readFSM();
   void parseDefinitions(const tinyxml2::XMLElement* );
   void parseFSM(const tinyxml2::XMLElement* );
 
 private:
-
-  class Actions
-  {
-  public:
-    std::string name;
-
-  };
 
   bool hasSubStates( const tinyxml2::XMLElement* );
   void checkSubEvents( const tinyxml2::XMLElement* );
@@ -50,4 +44,5 @@ private:
   std::map< std::string, const tinyxml2::XMLElement* > mStates;
   std::map< std::string, int > mTriggers;
   std::map< std::string, int > mEvents;
+  bool mVerbose = false;
 };

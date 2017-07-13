@@ -376,22 +376,32 @@ void YaFsmScxmlParser::writeFSMStates(const tinyxml2::XMLElement* elem)
 
 void YaFsmScxmlParser::writeFSMStates(std::ofstream& fh, std::ofstream& fs, const tinyxml2::XMLElement* elem,const std::string& parentName)
 {
-  const tinyxml2::XMLElement* state = elem->FirstChildElement( "state" );
+  std::string keyword = "state";
+  const tinyxml2::XMLElement* state = elem->FirstChildElement( keyword.c_str() );
+
   while(state)
   {
     if(hasSubStates(state))
     {
-      genStateImpl(fh, fs, state, state->Attribute("id"));
+      genStateImpl(fh, fs, state, parentName);
       writeFSMStates(fh, fs, state, state->Attribute("id") );
     }
     else
     {
-     genStateImpl(fh, fs, state, parentName );
+      genStateImpl(fh, fs, state, parentName );
     }
     //genStateTransImpl(fh, fs, state );
 
-    state = state->NextSiblingElement("state");
-
+    state = state->NextSiblingElement(keyword.c_str());
+    if(!state && keyword == "state")
+    {
+      keyword = "final";
+      state = elem->FirstChildElement(keyword.c_str());
+      if(state)
+      {
+        if( mVerbose ) std::cout << "found final state " << state->Attribute(("id")) <<std::endl;
+      }
+    }
   }
 }
 
@@ -403,6 +413,7 @@ void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const 
   }
 
   std::string state_id = state->Attribute("id");
+  if( mVerbose ) std::cout << "generating code for state " << state_id << std::endl;
 
 
   if(!parentName.empty())
@@ -452,27 +463,35 @@ void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const 
     const tinyxml2::XMLElement* script = transition->FirstChildElement("script");
     std::string actionName = std::string("transition_") + state_id + "_" + transition->Attribute("event") +"_" + std::to_string(transIdx);
     std::string event = transition->Attribute("event");
-    while(script)
+    auto it = mDataModel.find("classname");
+    if(it != mDataModel.end())
     {
-      auto it = mDataModel.find("classname");
-      if(it != mDataModel.end())
+      if(!event.empty())
       {
-        if(!event.empty())
-        {
-          fh << "  void " << actionName << "( " <<  mDataModel["classname"] << "& model, const " << event << "& _event );\n";
-        }
-        else
-        {
-          fh << "  void " << actionName << "( " <<  mDataModel["classname"] << "& model );\n";
-        }
+        fh << "  void " << actionName << "( " <<  mDataModel["classname"] << "& model, const " << event << "& _event );\n";
+        fs << "void State"<< state_id <<"::" << actionName << "( " <<  mDataModel["classname"] << "& model, const " << event << "& _event );\n";
       }
       else
       {
-        fh << "  void " << actionName << "();\n";
+        fh << "  void " << actionName << "( " <<  mDataModel["classname"] << "& model );\n";
+        fs << "  void " << actionName << "( " <<  mDataModel["classname"] << "& model )\n";
       }
-      script = script->NextSiblingElement("script");
-
     }
+    else
+    {
+      fh << "  void " << actionName << "();\n";
+      fs << "  void " << actionName << "()\n";
+    }
+    fs << "{\n";
+
+    while(script)
+    {
+      fs << script << "\n";
+      script = script->NextSiblingElement("script");
+    }
+
+    fs << "}\n\n";
+
     transIdx++;
 
     transition = transition->NextSiblingElement("transition");
@@ -482,39 +501,51 @@ void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const 
   const tinyxml2::XMLElement* onentry = state->FirstChildElement("onentry");
   if(onentry)
   {
+    auto it = mDataModel.find("classname");
+    if(it != mDataModel.end())
+    {
+      fh << "  void " << state_id << "_onEntry( " <<  mDataModel["classname"] << "& model );\n";
+      fs << "  void " << state_id << "_onEntry( " <<  mDataModel["classname"] << "& model )\n";
+    }
+    else
+    {
+      fh << "  void " << state_id << "_onEntry();\n";
+      fs << "  void " << state_id << "_onEntry()\n";
+    }
+
+    fs << "{\n";
     const tinyxml2::XMLElement* script = onentry->FirstChildElement("script");
     while(script)
     {
-      auto it = mDataModel.find("classname");
-      if(it != mDataModel.end())
-      {
-        fh << "  void " << state_id << "_onEntry( " <<  mDataModel["classname"] << "& model );\n";
-      }
-      else
-      {
-        fh << "  void " << state_id << "_onEntry();\n";
-      }
-
+      fs << script << "\n";
       script = script->NextSiblingElement("script");
     }
+    fs << "}\n";
   }
+
   const tinyxml2::XMLElement* onexit = state->FirstChildElement("onexit");
   if(onexit)
   {
+    auto it = mDataModel.find("classname");
+    if(it != mDataModel.end())
+    {
+      fh << "  void " << state_id << "_onExit( " <<  mDataModel["classname"] << "& model );\n";
+      fs << "  void " << state_id << "_onExit( " <<  mDataModel["classname"] << "& model )\n";
+    }
+    else
+    {
+      fh << "  void " << state_id << "_onExit();\n";
+      fs << "  void " << state_id << "_onExit()\n";
+    }
+
+    fs << "{\n";
     const tinyxml2::XMLElement* script = onexit->FirstChildElement("script");
     while(script)
     {
-      auto it = mDataModel.find("classname");
-      if(it != mDataModel.end())
-      {
-        fh << "  void " << state_id << "_onExit( " <<  mDataModel["classname"] << "& model );\n";
-      }
-      else
-      {
-        fh << "  void " << state_id << "_onExit();\n";
-      }
+      fs << script << "\n";
       script = script->NextSiblingElement("script");
     }
+    fs << "}\n";
   }
 
 
@@ -534,43 +565,6 @@ void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const 
   fs << "{\n";
   fs << "}\n\n";
 
-
-//  while( my( $key, $value ) = each( %YaFsmScxmlParser::gFSMActions) )
-//  {
-//    foreach my $action (@{$value})
-//    {
-//      if($key eq $state->{id} )
-//      {
-//        #YaFsm::printDbg("trigger: $key ( $value )");
-//        if( $action->{script})
-//        {
-//          if( %YaFsmScxmlParser::gFSMDataModel )
-//          {
-//            if( $action->{event} )
-//            {
-//              fs << "void State"<< state_id <<"::$action->{name}( " .  $YaFsmScxmlParser::gFSMDataModel{classname} . "& model, const $action->{event} " . "& _event )\n";
-//            }
-//            else
-//            {
-//              fs << "void State"<< state_id <<"::$action->{name}( " .  $YaFsmScxmlParser::gFSMDataModel{classname} . "& model )\n";
-//            }
-//          }
-//          else
-//          {
-//            fs << "void State"<< state_id <<"::$action->{name}()\n";
-//          }
-//          fs << "{\n";
-//          my @codeList = $action->{script};
-//          foreach (@codeList)
-//          {
-//            fs << "  $_\n";
-//          }
-//          fs << "}\n\n";
-
-//        }
-//      }
-//    }
-//  }
 
 
 //  {

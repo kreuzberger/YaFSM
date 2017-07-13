@@ -1,5 +1,4 @@
 #include "YaFsmScxmlParser.h"
-
 #include <string>
 
 void printHelp()
@@ -8,6 +7,7 @@ void printHelp()
   fprintf(stderr, "\nOptions:\n");
   fprintf(stderr, "  --fsm <scxml>    scml file name\n");
   fprintf(stderr, "  --outcode <dir>  generated code directory\n");
+  fprintf(stderr, "  --verbose        output parser info\n");
 }
 
 bool parseArgs( YaFsmScxmlParser& parser, int& argc, char** argv)
@@ -26,6 +26,10 @@ bool parseArgs( YaFsmScxmlParser& parser, int& argc, char** argv)
     {
       std::string codePath = argv[idx+1];
       parser.setCodeOutDir(codePath);
+    }
+    else if(std::string(argv[idx]) == std::string("--verbose"))
+    {
+      parser.setVerbose(true);
     }
     else if(std::string(argv[idx]) == std::string("--help"))
     {
