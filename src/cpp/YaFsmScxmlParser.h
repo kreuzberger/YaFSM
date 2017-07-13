@@ -30,12 +30,16 @@ public:
 private:
 
   bool hasSubStates( const tinyxml2::XMLElement* );
+  bool hasStateActions( const std::string& action, const tinyxml2::XMLElement*);
+  std::string getEnterStateName( const tinyxml2::XMLElement* );
   void checkSubEvents( const tinyxml2::XMLElement* );
   void writeInterfaceFSMStateHeader();
   void writeFSMStateBaseHeader();
   void writeFSMStates(const tinyxml2::XMLElement*);
   void writeFSMStates(std::ofstream& header, std::ofstream& source, const tinyxml2::XMLElement*, const std::string& parentName);
   void genStateImpl(std::ofstream& header, std::ofstream& source, const tinyxml2::XMLElement*, const std::string& parentName);
+  void genTransImpl(std::ofstream& fh, std::ofstream& fs, const tinyxml2::XMLElement* elem, const std::string& parentName);
+  void genStateActions(std::ofstream& fs, const std::string& state_id, const tinyxml2::XMLElement* elem);
 
   std::string mFileName;
   std::string mCodeOutDir;
