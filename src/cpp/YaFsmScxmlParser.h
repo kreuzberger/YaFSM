@@ -30,7 +30,7 @@ public:
 private:
 
   bool hasSubStates( const tinyxml2::XMLElement* );
-  bool hasStateActions( const std::string& action, const tinyxml2::XMLElement*);
+  bool hasActions( const std::string& action, const tinyxml2::XMLElement*);
   std::string getEnterStateName( const tinyxml2::XMLElement* );
   void checkSubEvents( const tinyxml2::XMLElement* );
   void writeInterfaceFSMStateHeader();

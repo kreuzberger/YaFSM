@@ -45,10 +45,10 @@ void YaFsmScxmlParser::readFSM()
       parseFSM(elem);
 
       // start writing out code files
-      writeInterfaceFSMStateHeader();
-      writeFSMStateBaseHeader();
       writeFSMStates(elem);
       writeFSMHeader(elem);
+      writeInterfaceFSMStateHeader();
+      writeFSMStateBaseHeader();
     }
   }
   else
@@ -218,10 +218,10 @@ bool YaFsmScxmlParser::hasSubStates(const tinyxml2::XMLElement* elem)
 std::string YaFsmScxmlParser::getEnterStateName(const tinyxml2::XMLElement * elem )
 {
   std::string name;
-  const tinyxml2::XMLElement* initial = elem->FirstChildElement("inital");
+  const tinyxml2::XMLElement* initial = elem->FirstChildElement("initial");
   if(initial)
   {
-    const tinyxml2::XMLElement* transition = elem->FirstChildElement("transition");
+    const tinyxml2::XMLElement* transition = initial->FirstChildElement("transition");
     if(transition)
     {
       name = transition->Attribute("target");
@@ -231,7 +231,7 @@ std::string YaFsmScxmlParser::getEnterStateName(const tinyxml2::XMLElement * ele
   return name;
 }
 
-bool YaFsmScxmlParser::hasStateActions(const std::string& str, const tinyxml2::XMLElement * elem)
+bool YaFsmScxmlParser::hasActions(const std::string& str, const tinyxml2::XMLElement * elem)
 {
   bool has = false;
   const tinyxml2::XMLElement* action = elem->FirstChildElement(str.c_str());
@@ -247,7 +247,7 @@ void YaFsmScxmlParser::writeInterfaceFSMStateHeader()
 {
   std::ofstream fh;
   fh.open((mCodeOutDir + YaFsm::sep + std::string("I") + mDataModel["name"] + std::string("State.h")), std::ofstream::out | std::ofstream::trunc);
-  fh << "#pragma once";
+  fh << "#pragma once\n\n";
   auto it = mDataModel.find("headerfile");
   if( it != mDataModel.end())
   {
@@ -275,7 +275,6 @@ void YaFsmScxmlParser::writeInterfaceFSMStateHeader()
 
   fh << "};\n";
   fh << "\n";
-  fh << "#endif\n";
   fh.close();
 
 }
@@ -509,12 +508,12 @@ void YaFsmScxmlParser::genTransitionActions(std::ofstream& fs, const std::string
     {
       if(mVerbose) std::cout << "implement script action for transtion" << std::endl;
       std::string text = action->GetText();
-      fs << "  " << text << "\n";
+      fs << "    " << text << "\n";
     }
     else if( std::string("raise") == std::string(action->Name()))
     {
       if(mVerbose) std::cout << "implement raise action for transition " << std::endl;
-      fs << "  fsmImpl.sendEvent(\"" << event << "\", "  << action->Attribute("event") <<"(), 0);\n";
+      fs << "    fsmImpl.sendEvent(\"" << event << "\", "  << action->Attribute("event") <<"(), 0);\n";
     }
     else if( std::string("assign") == std::string(action->Name()))
     {
@@ -524,13 +523,13 @@ void YaFsmScxmlParser::genTransitionActions(std::ofstream& fs, const std::string
     {
       if(mVerbose) std::cout << "implement send action for transition" << std::endl;
       std::string event = action->Attribute("event");
-      fs <<  "  " << event << " data" << event << ";\n";
+      fs <<  "    " << event << " data" << event << ";\n";
       const tinyxml2::XMLElement* para = action->FirstChildElement("param");
       if( para )
       {
         if(para->Attribute("expr"))
         {
-          fs << "  data" << event << "." << para->Attribute("name") << " = " << para->Attribute("expr")  <<";\n";
+          fs << "    data" << event << "." << para->Attribute("name") << " = " << para->Attribute("expr")  <<";\n";
         }
         para = para->NextSiblingElement("para");
       }
@@ -550,14 +549,14 @@ void YaFsmScxmlParser::genTransitionActions(std::ofstream& fs, const std::string
         delay = action->Attribute("delay");
       }
 
-      fs << "  " << "fsmImpl.sendEvent( \"" << event << "\", data"<< event << ", " << delay << ");\n";
+      fs << "    " << "fsmImpl.sendEvent( \"" << event << "\", data"<< event << ", " << delay << ");\n";
 
     }
     else if( std::string("cancel") == std::string(action->Name()) )
     {
       if(mVerbose) std::cout << "implement cancel action for transition " << std::endl;
 
-      fs << "  fsmImpl.cancelEvent(\"" << event << "\", "  << action->Attribute("sendid") <<"(), 0);\n";
+      fs << "    fsmImpl.cancelEvent(\"" << event << "\", "  << action->Attribute("sendid") <<"(), 0);\n";
     }
 
     action = action->NextSiblingElement();
@@ -603,8 +602,8 @@ void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const 
       auto it = processedTriggers.find(event);
       if( it == processedTriggers.end())
       {
-        const char* source = transition->Attribute("source");
-        if( source && source == state_id)
+//        const char* source = transition->Attribute("source");
+//        if( source && source == state_id)
         {
           fh << "  virtual void send_" << event << "( " << mDataModel["name"] << "&, const " << event <<"& _event );\n";
           processedTriggers[event] = true;
@@ -679,7 +678,7 @@ void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const 
 
 
   std::string enterStateName = getEnterStateName(state);
-  if( !enterStateName.empty() || hasStateActions("onentry",state))
+  if( !enterStateName.empty() || hasActions("onentry",state))
   {
     fs << "void State"<< state_id <<"::enter( " << mDataModel["name"] << "& fsmImpl )\n";
   }
@@ -690,9 +689,13 @@ void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const 
 
   fs << "{\n";
 
-  if( hasStateActions("onentry",state))
+  if( hasActions("onentry",state))
   {
-    fs << "  model = fsmImpl.model();\n";
+    auto it = mDataModel.find("classname");
+    if( it != mDataModel.end())
+    {
+      fs << "  " << mDataModel["classname"] << "& model = fsmImpl.model();\n";
+    }
 
     genStateActions(fs, state_id, state->FirstChildElement("onentry"));
 
@@ -706,7 +709,7 @@ void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const 
 
   fs << "}\n\n";
 
-  if( hasStateActions("onexit",state))
+  if( hasActions("onexit",state))
   {
     fs << "void State"<< state_id <<"::exit( " << mDataModel["name"] << "& fsmImpl )\n";
   }
@@ -717,9 +720,13 @@ void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const 
 
   fs << "{\n";
 
-  if( hasStateActions("onexit",state))
+  if( hasActions("onexit",state))
   {
-    fs << "  model = fsmImpl.model();\n";
+    auto it = mDataModel.find("classname");
+    if( it != mDataModel.end())
+    {
+      fs << "  " << mDataModel["classname"] << "& model = fsmImpl.model();\n";
+    }
 
     genStateActions(fs, state_id, state->FirstChildElement("onexit"));
   }
@@ -739,9 +746,9 @@ void YaFsmScxmlParser::genTransImpl(std::ofstream &fh, std::ofstream &fs, const 
 ///    std::string source = std::string(transition->Attribute("source"));
     std::string source = std::string(state->Attribute("id"));
     std::string target = source;
-    if(state->Attribute("target"))
+    if(transition->Attribute("target"))
     {
-      target = state->Attribute("target");
+      target = transition->Attribute("target");
     }
     std::string criteria = source + "_" + event;
     //    # add methods for each trigger.
@@ -755,6 +762,7 @@ void YaFsmScxmlParser::genTransImpl(std::ofstream &fh, std::ofstream &fs, const 
       fs << "{\n";
 
       fs << "  (void) fsmImpl;\n";
+      auto it = mDataModel.find("classname");
 
       std::string condition;
       if(transition->Attribute("cond"))
@@ -776,25 +784,16 @@ void YaFsmScxmlParser::genTransImpl(std::ofstream &fh, std::ofstream &fs, const 
 
       }
 
-//      if(YaFsmScxmlParser::hasTransitionActions($transArray[$nextIdx]))
-//      {
-//        print $fhS ( "    transition_" . $transArray[$nextIdx]->{source} . "_" . $transArray[$nextIdx]->{event} . "_$idx(fsmImpl.model(), _event);\n" );
-//      }
-//      if(YaFsmScxmlParser::hasTransitionEvents($transArray[$nextIdx]))
-//      {
-//        foreach(@{$transArray[$nextIdx]->{raise}})
-//        {
-//          print $fhS "    fsmImpl.sendEvent( \"$transArray[$nextIdx]->{event}\", " . $_->{event} . "(), 0);\n";
-//        }
-//        foreach(@{$transArray[$nextIdx]->{send}})
-//        {
-//          genSendEventImpl($fhS, $transArray[$nextIdx]->{event}, $_);
-//        }
-//        foreach(@{$transArray[$nextIdx]->{cancel}})
-//        {
-//          genCancelEventImpl($fhS, $_);
-//        }
-//      }
+      if(hasActions("script",transition))
+      {
+        if( it != mDataModel.end())
+        {
+          fs << "    " << mDataModel["classname"] << "& model = fsmImpl.model();\n";
+        }
+
+      }
+
+      genTransitionActions(fs,event,transition);
 
       if( source != target )
       {
@@ -879,18 +878,20 @@ void YaFsmScxmlParser::writeFSMHeader( const tinyxml2::XMLElement * elem)
   fh << "  , mbInit( false )\n";
   fh << "  , mFSMEvent( self() )\n";
 
+  // todo implement member handling
   for( auto it = mMembers.begin(); it != mMembers.end(); ++it)
   {
-    const char* src = (*it).second->Attribute("src");
-    const char* expr = (*it).second->Attribute("expr");
-    if( src )
-    {
-      fh << "  , " << (*it).second->Attribute("id") << "()\n";
-    }
-    else if (expr)
-    {
-      fh << "  , " << (*it).second->Attribute("id") << "(" << expr << ")\n";
-    }
+//    const char* src = (*it).second->Attribute("src");
+//    const char* expr = (*it).second->Attribute("expr");
+//    const char* id = (*it).second->Attribute("expr");
+//    if( src )
+//    {
+//      fh << "  , " << (*it).second->Attribute("id") << "()\n";
+//    }
+//    else if (expr)
+//    {
+//      fh << "  , " << (*it).second->Attribute("id") << "(" << expr << ")\n";
+//    }
   }
   fh << "  {\n";
 
@@ -1026,16 +1027,20 @@ void YaFsmScxmlParser::writeFSMHeader( const tinyxml2::XMLElement * elem)
     fh << "  std::map<int, " << (*it).first << "> mParaMap_" << (*it).first <<";\n";
   }
 
-  for( auto it = mMembers.begin(); it != mMembers.end(); ++it)
-  {
-    const char* src = (*it).second->Attribute("src");
-    const char* classname = (*it).second->Attribute("classname");
-    const char* id = (*it).second->Attribute("id");
-    if( src && classname && id)
-    {
-      fh << "  " << classname << " " << id << ";\n";
-    }
-  }
+// todo implement member handling
+  //  for( auto it = mMembers.begin(); it != mMembers.end(); ++it)
+//  {
+//    YaFsm::printDbg(std::string("found member ") + (*it).first);
+//    //const char* src = (*it).second->Attribute("src");
+//    const char* classname = (*it).second->Attribute("classname");
+//    if( classname ) YaFsm::printDbg("found classname in member");
+//    const char* id = (*it).second->Attribute("id");
+//    if( id ) YaFsm::printDbg("found id in member");
+//    if( classname && id)
+//    {
+//      fh << "  " << classname << " " << id << ";\n";
+//    }
+//  }
   fh << "\n";
   fh << "};\n";
   fh << "\n";
@@ -1169,7 +1174,30 @@ void YaFsmScxmlParser::writeFSMHeader( const tinyxml2::XMLElement * elem)
   for( auto it = mTriggers.begin(); it != mTriggers.end(); ++it)
   {
     fh << "inline void " << mDataModel["name"] << "::sendEvent( const " << (*it).first << "& _event)\n";
-    // todo printTriggerImpl($FSMName, $fh, $key, $value);
+
+    fh << "{\n";
+    fh << "  if( 0 != mpoCurrentState )\n";
+    fh << "  {\n";
+    fh << "    if( isInitialised() )\n";
+    fh << "    {\n";
+    fh << "      if( !isLocked() )\n";
+    fh << "      {\n";
+    fh << "        setLocked( true );\n";
+    fh << "        mpoCurrentState->send_"  << (*it).first << "( self(), _event );\n";
+    fh << "        setLocked( false );\n";
+    fh << "      }\n";
+    fh << "      else\n";
+    fh << "      {\n";
+    fh << "        std::cerr << ( \"forbidden call to trigger " << (*it).first << " from action\" ) << std::endl;\n";
+    fh << "      }\n";
+    fh << "    }\n";
+    fh << "    else\n";
+    fh << "    {\n";
+    fh << "      std::cerr << ( \"call to trigger " << (*it).first << " before initFSM()\" ) << std::endl;\n";
+    fh << "    }\n";
+
+    fh << "  }\n";
+    fh << "}\n";
     fh << "\n";
   }
   fh << "\n";

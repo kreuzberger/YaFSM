@@ -15,11 +15,11 @@ void QTestSimpleScxmlFSM::testInitFSM()
 
   QString str;
   str = mSimpleScxmlFSM.getStateName().c_str();
-  QCOMPARE(QString("stop"),str);
+  QCOMPARE(str, QString("stop"));
 
   mSimpleScxmlFSM.sendEvent(run());
   str = mSimpleScxmlFSM.getStateName().c_str();
-  QCOMPARE(QString("running"),str);
+  QCOMPARE(str, QString("running"));
 
   QCOMPARE(spyEnterRunning.count(), 1); // make sure the signal was emitted exactly one time
   QList<QVariant> args = spyEnterRunning.takeFirst();
@@ -29,7 +29,7 @@ void QTestSimpleScxmlFSM::testInitFSM()
 
   mSimpleScxmlFSM.sendEvent(end());
   str = mSimpleScxmlFSM.getStateName().c_str();
-  QCOMPARE(QString("FinalState"),str);
+  QCOMPARE(str, QString("FinalState"));
 
   QCOMPARE(spyEnterFinal.count(), 1); // make sure the signal was emitted exactly one time
   args = spyEnterFinal.takeFirst();
