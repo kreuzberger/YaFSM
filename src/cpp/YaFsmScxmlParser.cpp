@@ -48,6 +48,7 @@ void YaFsmScxmlParser::readFSM()
       writeInterfaceFSMStateHeader();
       writeFSMStateBaseHeader();
       writeFSMStates(elem);
+      writeFSMHeader(elem);
     }
   }
   else
@@ -476,7 +477,13 @@ void YaFsmScxmlParser::genStateActions(std::ofstream& fs, const std::string& sta
       {
         YaFsm::printWarn("use of idlocation for send event not allowed!\n!");
       }
-      fs << "  " << "fsmImpl.sendEvent( \"" << state_id << "\", data"<< event << ", $eventPara->{delay});\n";
+      std::string delay = "0";
+      if( action->Attribute("delay"))
+      {
+        delay = action->Attribute("delay");
+      }
+
+      fs << "  " << "fsmImpl.sendEvent( \"" << state_id << "\", data"<< event << ", " << delay << ");\n";
 
     }
     else if( std::string("cancel") == std::string(action->Name()) )
@@ -490,6 +497,75 @@ void YaFsmScxmlParser::genStateActions(std::ofstream& fs, const std::string& sta
   }
 
 }
+
+
+void YaFsmScxmlParser::genTransitionActions(std::ofstream& fs, const std::string& event, const tinyxml2::XMLElement* elem)
+{
+
+  const tinyxml2::XMLElement* action = elem->FirstChildElement();
+  while(action)
+  {
+    if(std::string("script") == std::string(action->Name()))
+    {
+      if(mVerbose) std::cout << "implement script action for transtion" << std::endl;
+      std::string text = action->GetText();
+      fs << "  " << text << "\n";
+    }
+    else if( std::string("raise") == std::string(action->Name()))
+    {
+      if(mVerbose) std::cout << "implement raise action for transition " << std::endl;
+      fs << "  fsmImpl.sendEvent(\"" << event << "\", "  << action->Attribute("event") <<"(), 0);\n";
+    }
+    else if( std::string("assign") == std::string(action->Name()))
+    {
+      if(mVerbose) std::cout << "unhandled action assign " << std::endl;
+    }
+    else if( std::string("send") == std::string(action->Name()))
+    {
+      if(mVerbose) std::cout << "implement send action for transition" << std::endl;
+      std::string event = action->Attribute("event");
+      fs <<  "  " << event << " data" << event << ";\n";
+      const tinyxml2::XMLElement* para = action->FirstChildElement("param");
+      if( para )
+      {
+        if(para->Attribute("expr"))
+        {
+          fs << "  data" << event << "." << para->Attribute("name") << " = " << para->Attribute("expr")  <<";\n";
+        }
+        para = para->NextSiblingElement("para");
+      }
+
+
+      if(action->Attribute("id"))
+      {
+        YaFsm::printWarn("use of generated ids for send event not allowed!\n!");
+      }
+      else if(action->Attribute("idlocation"))
+      {
+        YaFsm::printWarn("use of idlocation for send event not allowed!\n!");
+      }
+      std::string delay = "0";
+      if( action->Attribute("delay"))
+      {
+        delay = action->Attribute("delay");
+      }
+
+      fs << "  " << "fsmImpl.sendEvent( \"" << event << "\", data"<< event << ", " << delay << ");\n";
+
+    }
+    else if( std::string("cancel") == std::string(action->Name()) )
+    {
+      if(mVerbose) std::cout << "implement cancel action for transition " << std::endl;
+
+      fs << "  fsmImpl.cancelEvent(\"" << event << "\", "  << action->Attribute("sendid") <<"(), 0);\n";
+    }
+
+    action = action->NextSiblingElement();
+  }
+
+}
+
+
 
 
 void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const tinyxml2::XMLElement* state, const std::string& parentName)
@@ -544,47 +620,46 @@ void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const 
   fh << "  void exit( " << mDataModel["name"] << "& );\n";
 
   transition = state->FirstChildElement("transition");
-  int transIdx = 0;
-  while(transition)
-  {
-    const tinyxml2::XMLElement* script = transition->FirstChildElement("script");
-    std::string actionName = std::string("transition_") + state_id + "_" + transition->Attribute("event") +"_" + std::to_string(transIdx);
-    std::string event = transition->Attribute("event");
-    auto it = mDataModel.find("classname");
-    if(it != mDataModel.end())
-    {
-      if(!event.empty())
-      {
-        fh << "  void " << actionName << "( " <<  mDataModel["classname"] << "& model, const " << event << "& _event );\n";
-        fs << "void State"<< state_id <<"::" << actionName << "( " <<  mDataModel["classname"] << "& model, const " << event << "& _event );\n";
-      }
-      else
-      {
-        fh << "  void " << actionName << "( " <<  mDataModel["classname"] << "& model );\n";
-        fs << "  void " << actionName << "( " <<  mDataModel["classname"] << "& model )\n";
-      }
-    }
-    else
-    {
-      fh << "  void " << actionName << "();\n";
-      fs << "  void " << actionName << "()\n";
-    }
-    fs << "{\n";
+//  while(transition)
+//  {
+//    const tinyxml2::XMLElement* script = transition->FirstChildElement("script");
+//    std::string actionName = std::string("transition_") + state_id + "_" + transition->Attribute("event") +"_" + std::to_string(transIdx);
+//    std::string event = transition->Attribute("event");
+//    auto it = mDataModel.find("classname");
+//    if(it != mDataModel.end())
+//    {
+//      if(!event.empty())
+//      {
+//        fh << "  void " << actionName << "( " <<  mDataModel["classname"] << "& model, const " << event << "& _event );\n";
+//        fs << "void State"<< state_id <<"::" << actionName << "( " <<  mDataModel["classname"] << "& model, const " << event << "& _event );\n";
+//      }
+//      else
+//      {
+//        fh << "  void " << actionName << "( " <<  mDataModel["classname"] << "& model );\n";
+//        fs << "  void " << actionName << "( " <<  mDataModel["classname"] << "& model )\n";
+//      }
+//    }
+//    else
+//    {
+//      fh << "  void " << actionName << "();\n";
+//      fs << "  void " << actionName << "()\n";
+//    }
+//    fs << "{\n";
 
-    while(script)
-    {
-      std::string text = script->GetText();
-      fs << "  " << text << "\n";
-      script = script->NextSiblingElement("script");
-    }
+//    while(script)
+//    {
+//      std::string text = script->GetText();
+//      fs << "  " << text << "\n";
+//      script = script->NextSiblingElement("script");
+//    }
 
-    fs << "}\n\n";
+//    fs << "}\n\n";
 
-    transIdx++;
+//    transIdx++;
 
-    transition = transition->NextSiblingElement("transition");
+//    transition = transition->NextSiblingElement("transition");
 
-  }
+//  }
 
 
   fh << "};\n\n";
@@ -679,72 +754,462 @@ void YaFsmScxmlParser::genTransImpl(std::ofstream &fh, std::ofstream &fs, const 
       fs << "void State" << source << "::send_" << event << "(" << mDataModel["name"] << "& fsmImpl, const " << event << "& _event)\n";
       fs << "{\n";
 
-//      push(@{$genTransitions},$transCoverageName);
-
       fs << "  (void) fsmImpl;\n";
 
-//      for(my $nextIdx=$idx; $nextIdx < @transArray; $nextIdx++)
+      std::string condition;
+      if(transition->Attribute("cond"))
+      {
+        condition = transition->Attribute("cond");
+      }
+      if(!condition.empty())
+      {
+        fs << "  if( " << condition << " )\n";
+      }
+      fs << "  {\n";
+
+      fs << "    fsmImpl.setTransByName(\"" << criteria << "\");\n";
+      // current could be difficult to determine. if we made a fallthrough into next hierarchy level
+      // exit state by name
+      if( source != target )
+      {
+        fs << "    fsmImpl.exitState(\"" <<  source << "\");\n" ;
+
+      }
+
+//      if(YaFsmScxmlParser::hasTransitionActions($transArray[$nextIdx]))
 //      {
-//        if($transArray[$nextIdx]->{event} eq $trans->{event})
+//        print $fhS ( "    transition_" . $transArray[$nextIdx]->{source} . "_" . $transArray[$nextIdx]->{event} . "_$idx(fsmImpl.model(), _event);\n" );
+//      }
+//      if(YaFsmScxmlParser::hasTransitionEvents($transArray[$nextIdx]))
+//      {
+//        foreach(@{$transArray[$nextIdx]->{raise}})
 //        {
-//          if($transArray[$nextIdx]->{source} eq $trans->{source})
-//          {
-//            if($transArray[$nextIdx]->{cond})
-//            {
-//              print $fhS "  if ($transArray[$nextIdx]->{cond})\n"; #todo implement conditions
-//            }
-//            print $fhS "  {\n";
-//            print $fhS "    fsmImpl.setTransByName(\"$transCoverageName\");\n";
-//            # current could be difficult to determine. if we made a fallthrough into next hierarchy level
-//            # exit state by name
-//            if( $transArray[$nextIdx]->{source} ne $transArray[$nextIdx]->{target} )
-//            {
-//              print $fhS "    fsmImpl.exitState(\"" . $transArray[$nextIdx]->{source} ."\");\n" ;
-//            }
-
-//            if(YaFsmScxmlParser::hasTransitionActions($transArray[$nextIdx]))
-//            {
-//              print $fhS ( "    transition_" . $transArray[$nextIdx]->{source} . "_" . $transArray[$nextIdx]->{event} . "_$idx(fsmImpl.model(), _event);\n" );
-//            }
-//            if(YaFsmScxmlParser::hasTransitionEvents($transArray[$nextIdx]))
-//            {
-//              foreach(@{$transArray[$nextIdx]->{raise}})
-//              {
-//                print $fhS "    fsmImpl.sendEvent( \"$transArray[$nextIdx]->{event}\", " . $_->{event} . "(), 0);\n";
-//              }
-//              foreach(@{$transArray[$nextIdx]->{send}})
-//              {
-//                genSendEventImpl($fhS, $transArray[$nextIdx]->{event}, $_);
-//              }
-//              foreach(@{$transArray[$nextIdx]->{cancel}})
-//              {
-//                genCancelEventImpl($fhS, $_);
-//              }
-//            }
-
-//            if( $transArray[$nextIdx]->{source} ne $transArray[$nextIdx]->{target} )
-//            {
-//              print $fhS '    fsmImpl.setStateByName("' . $transArray[$nextIdx]->{target} . "\");\n";
-//              print $fhS "    fsmImpl.enterCurrentState();\n";
-//            }
-
-//            if($transArray[$nextIdx]->{cond} && (defined $parentName) && (0 < length($parentName)))
-//            {
-//              print $fhS "  }\n";
-//              print $fhS "  else // condition is not matched, we should now try if condition is matched by parent\n";
-//              print $fhS "  {\n";
-
-//              print $fhS "    State$parentName" . "::send_$trans->{event}( fsmImpl, $trans->{event} );\n";
-//            }
-
-//            print $fhS "  }\n\n";
-//          }
+//          print $fhS "    fsmImpl.sendEvent( \"$transArray[$nextIdx]->{event}\", " . $_->{event} . "(), 0);\n";
+//        }
+//        foreach(@{$transArray[$nextIdx]->{send}})
+//        {
+//          genSendEventImpl($fhS, $transArray[$nextIdx]->{event}, $_);
+//        }
+//        foreach(@{$transArray[$nextIdx]->{cancel}})
+//        {
+//          genCancelEventImpl($fhS, $_);
 //        }
 //      }
+
+      if( source != target )
+      {
+        fs << "    fsmImpl.setStateByName(\"" << target <<  "\");\n";
+        fs << "    fsmImpl.enterCurrentState();\n";
+      }
+
+      if( !condition.empty() && !parentName.empty())
+      {
+        fs << "  }\n";
+        fs << "  else // condition is not matched, we should now try if condition is matched by parent\n";
+        fs << "  {\n";
+
+        fs << "    State" << parentName << "::send_" << event << "( fsmImpl, " << event <<" );\n";
+      }
+
+      fs << "  }\n\n";
       fs << "}\n\n";
     }
-//    $idx++;
     transition = transition->NextSiblingElement("transition");
   }
+}
+
+void YaFsmScxmlParser::writeFSMHeader( const tinyxml2::XMLElement * elem)
+{
+  std::ofstream fh;
+  fh.open((mCodeOutDir + YaFsm::sep + mDataModel["name"] + std::string(".h")), std::ofstream::out | std::ofstream::trunc);
+  fh << "#pragma once";
+  fh << "\n";
+
+  fh << "#include \"" << mDataModel["name"] << "StateImpl.h\"\n";
+
+  auto it = mDataModel.find("headerfile");
+  if( it != mDataModel.end())
+  {
+    fh << "#include \"" << mDataModel["headerfile"] << "\"\n";
+  }
+
+  for( auto it = mMembers.begin(); it != mMembers.end(); ++it)
+  {
+    const char* src = (*it).second->Attribute("src");
+    if( src )
+    {
+      fh << "#include \"" << src <<  "\"\n";
+    }
+  }
+
+  fh << "#include \"IScxmlFSMEventCB.h\"\n";
+  fh << "#include \"IScxmlFSMEvent.h\"\n";
+  fh << "#include \"ScxmlFSMEvent.h\"\n";
+
+  fh << "\n";
+  fh << "\n";
+
+
+  fh << "#include <string>\n";
+  fh << "#include <map>\n";
+  fh << "#include <vector>\n";
+  fh << "#include <assert.h>\n";
+
+  fh << "\n// forward declarations\n";
+  fh << "class " << mDataModel["name"] << "StateBase;\n";
+
+  fh << "\nclass " << mDataModel["name"] << "\n";
+  fh << " : public IScxmlFSMEventCB\n";
+  fh << "{\n";
+  fh << "  friend class " << mDataModel["name"] << "StateBase;\n";
+
+  for( auto it = mStates.begin(); it != mStates.end(); ++it)
+  {
+    std::string id = (*it).first;
+    fh << "  friend class N" << mDataModel["name"] << "::State"  << id <<  ";\n";
+  }
+
+  fh << "\n";
+  fh << "public:\n";
+  fh << "  " << mDataModel["name"] << "()\n";
+  fh << "  : mpoCurrentState( 0 )\n";
+
+  fh << "  , mDataModel()\n";
+  fh << "  , mbLockTrigger( false )\n";
+  fh << "  , mbInit( false )\n";
+  fh << "  , mFSMEvent( self() )\n";
+
+  for( auto it = mMembers.begin(); it != mMembers.end(); ++it)
+  {
+    const char* src = (*it).second->Attribute("src");
+    const char* expr = (*it).second->Attribute("expr");
+    if( src )
+    {
+      fh << "  , " << (*it).second->Attribute("id") << "()\n";
+    }
+    else if (expr)
+    {
+      fh << "  , " << (*it).second->Attribute("id") << "(" << expr << ")\n";
+    }
+  }
+  fh << "  {\n";
+
+  for( auto it = mStates.begin(); it != mStates.end(); ++it)
+  {
+    std::string id = (*it).first;
+    fh << "    moStateMap[\"" << id << "\"] = &moState" << id <<  ";\n";
+    fh << "    moStateCoverageMap[\""  << id << "\"] = 0;\n";
+  }
+
+  for( auto it = mEvents.begin(); it != mEvents.end(); ++it)
+  {
+    fh << "    mFSMEvent.setEventID( EVENT_" << (*it).first << ");\n";
+  }
+
+  YaFsm::printDbg("get default enter state name for mpoCurrentState");
+  const char* initial  = elem->Attribute("initial");
+  if( initial )
+  {
+    fh << "    setStateByName(\"" << initial << "\");\n";
+  }
+  else
+  {
+    YaFsm::printFatal("required enter state missing");
+  }
+
+
+  fh << "  }\n";
+  fh << "  virtual ~" << mDataModel["name"] << "() {}\n";
+  fh << "\n";
+
+  fh << "  void initFSM( void );\n";
+  for( auto it = mEvents.begin(); it != mEvents.end(); ++it)
+  {
+    fh << "  virtual int sendEvent( const std::string& sendId, const " << (*it).first << "& data, int iDelayMs);\n";
+  }
+
+  fh << "  virtual void cancelEvent( const std::string& sendId );\n";
+
+  it = mDataModel.find("classname");
+  if( it != mDataModel.end())
+  {
+    fh << "  " << mDataModel["classname"] << "& model() { return mDataModel; }\n";
+  }
+
+
+  fh << "  // definiton of triggers\n";
+  for( auto it = mTriggers.begin(); it != mTriggers.end(); ++it)
+  {
+    fh << "public:\n";
+    fh << "  void sendEvent( const " << (*it).first << "& );\n";
+  }
+
+  fh << "\npublic:\n";
+
+  fh << "// for getting statistics information\n";
+  fh << "  void dumpCoverage( void ) const;\n";
+
+
+  fh << "\n  protected:\n";
+
+  fh << "  void setStateByName( const std::string& name );\n";
+  fh << "  void setTransByName( const std::string& name );\n";
+  fh << "  void enterCurrentState();\n";
+  fh << "  void exitState( const std::string& name );\n";
+  fh << "  virtual void processTimerEventID( int event, int id );\n";
+
+  fh << "\n";
+  fh << "//todo make this private and allow test makros to access this\n";
+
+  fh << "#ifdef TESTFSM\n";
+  fh << " public: const std::string& getStateName() const;\n";
+  fh << "#else\n";
+  fh << "  const std::string& getStateName() const;\n";
+  fh << "#endif\n";
+
+  //define events enumeration
+  fh << "  public:\n";
+  std::string name = mDataModel["name"];
+  for (auto & c: name) c = toupper(c);
+  fh << "  enum " << name << "EVENT\n";
+  fh << "  {\n";
+
+  int enumIdx = 0;
+
+  for( auto it = mEvents.begin(); it != mEvents.end(); ++it)
+  {
+    if(0 == enumIdx)
+    {
+      fh << "    EVENT_"  << (*it).first << "=1,\n";
+    }
+    else
+    {
+      fh << "    EVENT_" << (*it).first << ",\n";
+    }
+    enumIdx++;
+  }
+  fh << "  };\n";
+
+
+  fh << "  private:\n";
+  fh << "  //" << mDataModel["name"] << "StateBase& ( const std::string& name );\n";
+  fh << "  " << mDataModel["name"] << "& self();\n";
+  fh << "  bool isLocked( void );\n";
+  fh << "  void setLocked( bool );\n";
+  fh << "  bool isInitialised( void );\n";
+  fh << "  void registerEventID( int );\n";
+  fh << "  void exitSubStates(const std::string& name );\n";
+
+  fh << "  " << mDataModel["name"] << "StateBase* mpoCurrentState;\n";
+
+  it = mDataModel.find("classname");
+  if( it != mDataModel.end())
+  {
+    fh << "  " << mDataModel["classname"] << " mDataModel;\n";
+  }
+
+  fh << "\n";
+  fh << "  // definition of all states as members\n";
+  for( auto it = mStates.begin(); it != mStates.end(); ++it)
+  {
+    std::string id = (*it).first;
+    fh << "  N" << mDataModel["name"] << "::State" << id << " moState" << id << ";\n";
+  }
+  fh << "  std::map<std::string, " << mDataModel["name"] <<"StateBase*> moStateMap;\n";
+  fh << "  std::map<std::string, int> moStateCoverageMap;\n";
+  fh << "  std::map<std::string, int> moTransCoverageMap;\n";
+  fh << "  bool mbLockTrigger;\n";
+  fh << "  bool mbInit;\n";
+  fh << "  ScxmlFSMEvent mFSMEvent;\n";
+  for( auto it = mEvents.begin(); it != mEvents.end(); ++it)
+  {
+    fh << "  std::map<int, " << (*it).first << "> mParaMap_" << (*it).first <<";\n";
+  }
+
+  for( auto it = mMembers.begin(); it != mMembers.end(); ++it)
+  {
+    const char* src = (*it).second->Attribute("src");
+    const char* classname = (*it).second->Attribute("classname");
+    const char* id = (*it).second->Attribute("id");
+    if( src && classname && id)
+    {
+      fh << "  " << classname << " " << id << ";\n";
+    }
+  }
+  fh << "\n";
+  fh << "};\n";
+  fh << "\n";
+  fh << "inline " << mDataModel["name"] << "& " << mDataModel["name"] << "::self()\n";
+  fh << "{\n";
+  fh << "  return (*this);\n";
+  fh << "}\n";
+  fh << "\n";
+  fh << "inline void " << mDataModel["name"] << "::setStateByName( const std::string& name)\n";
+  fh << "{\n";
+  fh << "  // set states by names\n";
+  fh << "  if (moStateMap.end() != moStateMap.find(name) )\n";
+  fh << "  {\n";
+  fh << "    mpoCurrentState =  moStateMap[name];\n";
+  fh << "    moStateCoverageMap[name] = moStateCoverageMap[name] + 1;\n";
+  fh << "  }\n";
+  fh << "}\n";
+  fh << "\n";
+  fh << "inline void " << mDataModel["name"] << "::setTransByName( const std::string& name)\n";
+  fh << "{\n";
+  fh << "  // set transitions by names\n";
+  fh << "  if (moTransCoverageMap.end() != moTransCoverageMap.find(name) )\n";
+  fh << "  {\n";
+  fh << "    moTransCoverageMap[name] = moTransCoverageMap[name] + 1;\n";
+  fh << "  }\n";
+  fh << "}\n";
+  fh << "\n";
+  fh << "inline const std::string& " << mDataModel["name"] << "::getStateName() const\n";
+  fh << "{\n";
+  fh << "  return mpoCurrentState->getStateName();\n";
+  fh << "\n";
+  fh << "}\n";
+  fh << "\n";
+  fh << "inline void " << mDataModel["name"] << "::enterCurrentState()\n";
+  fh << "{\n";
+  fh << "  mpoCurrentState->enter(self());\n";
+  fh << "}\n";
+  fh << "\n";
+  fh << "inline void " << mDataModel["name"] << "::exitState( const std::string& name )\n";
+  fh << "{\n";
+  fh << "  exitSubStates(name);\n";
+  fh << "  moStateMap[name]->exit(self());\n";
+  fh << "}\n\n";
+  fh << "inline void " << mDataModel["name"] << "::exitSubStates( const std::string& name )\n";
+  fh << "{\n";
+  fh << "  std::vector<std::string> subStates;\n";
+  fh << "  std::string stateName = mpoCurrentState->getStateName();\n";
+  fh << "  while(name != stateName)\n";
+  fh << "  {\n";
+  fh << "    moStateMap[stateName]->exit(self());\n";
+  fh << "    stateName = moStateMap[stateName]->getParentStateName();\n";
+  fh << "  }\n";
+  fh << "}\n\n";
+
+
+
+  fh << "inline bool " << mDataModel["name"] << "::isLocked( void )\n";
+  fh << "{\n";
+  fh << "  return mbLockTrigger;\n";
+  fh << "}\n\n";
+  fh << "inline void " << mDataModel["name"] << "::setLocked( bool bLocked )\n";
+  fh << "{\n";
+  fh << "  mbLockTrigger = bLocked;\n";
+  fh << "}\n";
+  fh << "inline bool " << mDataModel["name"] << "::isInitialised( void )\n";
+  fh << "{\n";
+  fh << "  return mbInit;\n";
+  fh << "}\n\n";
+  fh << "\n";
+  fh << "inline void " << mDataModel["name"] << "::initFSM( void )\n";
+  fh << "{\n";
+  fh << "  mbInit = true;\n";
+  fh << "  enterCurrentState();\n";
+  fh << "}\n\n";
+  fh << "\n";
+
+  for( auto it = mEvents.begin(); it != mEvents.end(); ++it)
+  {
+    fh << "inline int " << mDataModel["name"] << "::sendEvent( const std::string& sendId, const " << (*it).first << "& data, int iDelayMs )\n";
+    fh << "{\n";
+    fh << "  int id = mFSMEvent.sendEventID( sendId + \"."  << (*it).first << "\", EVENT_" << (*it).first << " , iDelayMs );\n";
+    fh << "  mParaMap_" << (*it).first << "[id] = data;\n";
+    fh << "  return id;\n";
+    fh << "}\n";
+  }
+
+  fh << "inline void " << mDataModel["name"] << "::cancelEvent( const std::string& sendId )\n";
+  fh << "{\n";
+  fh << "  std::vector<int> ids = mFSMEvent.cancelEvent( sendId );\n";
+  fh << "  for(auto it = ids.begin(); it != ids.end(); ++it )\n";
+  fh << "  {\n";
+
+  for( auto it = mEvents.begin(); it != mEvents.end(); ++it)
+  {
+    fh << "    if( mParaMap_" << (*it).first << ".find(*it) != mParaMap_" << (*it).first << ".end()) { mParaMap_" << (*it).first << ".erase(*it); }\n";
+  }
+  fh << "  }\n";
+  fh << "}\n";
+
+
+  fh << "inline void " << mDataModel["name"] << "::processTimerEventID( int event, int id )\n";
+  fh << "{\n";
+
+  if(!mEvents.empty())
+
+  {
+    //definition of all timers as enumeration
+    fh << "\n";
+    fh << "  switch(event)\n";
+    fh << "  {\n";
+    for( auto it = mEvents.begin(); it != mEvents.end(); ++it)
+    {
+      fh << "  case EVENT_" << (*it).first << ":\n";
+      fh << "  {\n";
+      fh << "    " << (*it).first << " event = mParaMap_" << (*it).first << "[id];\n";
+      fh << "    sendEvent(event);\n";
+      fh << "    mParaMap_" << (*it).first << ".erase(id);\n";
+      fh << "  }\n";
+      fh << "  break;\n";
+    }
+
+    fh << "  default:\n";
+    fh << "  break;\n";
+    fh << "  }\n";
+  }
+
+  fh << "}\n";
+  fh << "\n";
+
+
+  for( auto it = mTriggers.begin(); it != mTriggers.end(); ++it)
+  {
+    fh << "inline void " << mDataModel["name"] << "::sendEvent( const " << (*it).first << "& _event)\n";
+    // todo printTriggerImpl($FSMName, $fh, $key, $value);
+    fh << "\n";
+  }
+  fh << "\n";
+  fh << "inline void " << mDataModel["name"] << "::dumpCoverage( void ) const\n";
+  fh << "{\n";
+  fh << "  int iStatesCovered = 0;\n";
+  fh << "  int iTransCovered = 0;\n";
+  fh << "  std::cout << std::endl << \"Dumping coverage information:\" << std::endl;\n";
+  fh << "  std::map<std::string, int>::const_iterator it;\n";
+  fh << "  for(it = moStateCoverageMap.begin(); it != moStateCoverageMap.end(); ++it)\n";
+  fh << "  {\n";
+  fh << "    std::cout << \"  state\" << it->first << \" covered \"<< it->second << \" times\" << std::endl;\n";
+  fh << "    if(0 < it->second)\n";
+  fh << "    {\n";
+  fh << "      iStatesCovered++;\n";
+  fh << "    }\n";
+  fh << "  }\n";
+
+  fh << "  for(it = moTransCoverageMap.begin(); it != moTransCoverageMap.end(); ++it)\n";
+  fh << "  {\n";
+  fh << "    std::cout << \"  transition \" << it->first << \" covered \"<< it->second << \" times\" << std::endl;\n";
+  fh << "    if(0 < it->second)\n";
+  fh << "    {\n";
+  fh << "      iTransCovered++;\n";
+  fh << "    }\n";
+  fh << "  }\n";
+
+  fh << "  std::cout << std::endl << \"  total coverage:\" << std::endl;\n";
+  fh << "  std::cout << \"  States covered: \" << iStatesCovered << \" out of \"<< moStateCoverageMap.size() << \", \";\n";
+  fh << "  std::cout << (static_cast<size_t>(iStatesCovered)*1.0) / (1.0*moStateCoverageMap.size()) * 100.0 << \" percent\" << std::endl;\n";
+  fh << "  std::cout << \"  Transitions covered: \" << iTransCovered << \" out of \"<< moTransCoverageMap.size() << \", \";\n";
+  fh << "  std::cout << (static_cast<size_t>(iTransCovered)*1.0) / (1.0*moTransCoverageMap.size()) * 100.0 << \" percent\" << std::endl;\n";
+
+  fh << "  \n";
+  fh << "  \n";
+  fh << "  \n";
+  fh << "}\n";
+
+  fh << "\n";
+
+  fh.close();
 
 }
