@@ -33,6 +33,7 @@ private:
   bool hasActions( const std::string& action, const tinyxml2::XMLElement*);
   std::string getEnterStateName( const tinyxml2::XMLElement* );
   void checkSubEvents( const tinyxml2::XMLElement* );
+  int delayToInt(const std::string&) const;
   void writeInterfaceFSMStateHeader();
   void writeFSMStateBaseHeader();
   void writeFSMStates(const tinyxml2::XMLElement*);
@@ -50,5 +51,6 @@ private:
   std::map< std::string, const tinyxml2::XMLElement* > mStates;
   std::map< std::string, int > mTriggers;
   std::map< std::string, int > mEvents;
+  bool mbDataModel = false;
   bool mVerbose = false;
 };

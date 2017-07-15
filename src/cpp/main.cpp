@@ -12,7 +12,7 @@ void printHelp()
 
 bool parseArgs( YaFsmScxmlParser& parser, int& argc, char** argv)
 {
-  bool ret = true;
+  int ret = 0;
 
   for( int idx = 1; idx < argc; idx++)
   {

@@ -38,6 +38,30 @@ void YaFsmScxmlParser::readFSM()
   tinyxml2::XMLError error  = doc.LoadFile( mFileName.c_str() );
   if( tinyxml2::XML_SUCCESS == error )
   {
+    size_t idx = mFileName.rfind(".scxml");
+    if( idx != std::string::npos)
+    {
+      std::string name  = mFileName.substr(0,idx);
+      idx = name.rfind(YaFsm::sep);
+      if( idx != std::string::npos)
+      {
+        name = name.substr(idx+1,name.length());
+        if(!name.empty())
+        {
+          mDataModel["name"] = name;
+        }
+        else
+        {
+          YaFsm::printDbg(std::string("found name ") + name);
+        }
+      }
+    }
+
+    if(mDataModel["name"].empty())
+    {
+      YaFsm::printFatal("cannot determine fsm name from filename. Only files with .scxml extension allowd!");
+    }
+
     tinyxml2::XMLElement* elem = doc.FirstChildElement( "scxml" );
     if(elem)
     {
@@ -60,7 +84,6 @@ void YaFsmScxmlParser::readFSM()
 
 void YaFsmScxmlParser::parseDefinitions(const tinyxml2::XMLElement* elem)
 {
-
   const tinyxml2::XMLAttribute* datamodel = elem->FindAttribute("datamodel");
   if( datamodel )
   {
@@ -75,6 +98,7 @@ void YaFsmScxmlParser::parseDefinitions(const tinyxml2::XMLElement* elem)
             mDataModel["type"] = elems[0];
             mDataModel["classname"] = elems[1];
             mDataModel["headerfile"] = elems[2];
+            mbDataModel = true;
           }
           else
           {
@@ -87,24 +111,6 @@ void YaFsmScxmlParser::parseDefinitions(const tinyxml2::XMLElement* elem)
        }
 
     }
-  }
-
-  const tinyxml2::XMLAttribute* name = elem->FindAttribute("name");
-  if( name )
-  {
-    std::string str = name->Value();
-    if(!str.empty())
-    {
-      mDataModel["name"] = str;
-    }
-    else
-    {
-      YaFsm::printFatal(std::string("empty name in scxml definition"));
-    }
-  }
-  else
-  {
-    YaFsm::printFatal(std::string("no name attribute in scxml definition"));
   }
 
   const tinyxml2::XMLElement* datamodelElem = elem->FirstChildElement("datamodel");
@@ -427,12 +433,34 @@ void YaFsmScxmlParser::writeFSMStates(std::ofstream& fh, std::ofstream& fs, cons
     {
       keyword = "final";
       state = elem->FirstChildElement(keyword.c_str());
-      if(state)
+    }
+  }
+}
+
+int YaFsmScxmlParser::delayToInt(const std::string& str) const
+{
+  int delay = 0;
+  std::string value ;
+
+  if ( !str.empty() )
+  {
+    size_t idx = str.find("ms");
+    if( idx != std::string::npos)
+    {
+      value = str.substr(0,idx);
+      delay = std::stoi(value);
+    }
+    else
+    {
+      idx = str.find("s");
+      if( idx != std::string::npos)
       {
-        if( mVerbose ) std::cout << "found final state " << state->Attribute(("id")) <<std::endl;
+        value =  str.substr(0,idx);
+        delay = std::stoi(value)*1000;
       }
     }
   }
+  return delay;
 }
 
 void YaFsmScxmlParser::genStateActions(std::ofstream& fs, const std::string& state_id, const tinyxml2::XMLElement* elem)
@@ -443,18 +471,15 @@ void YaFsmScxmlParser::genStateActions(std::ofstream& fs, const std::string& sta
   {
     if(std::string("script") == std::string(action->Name()))
     {
-      if(mVerbose) std::cout << "implement script action for state " << state_id << std::endl;
       std::string text = action->GetText();
       fs << "  " << text << "\n";
     }
     else if( std::string("raise") == std::string(action->Name()))
     {
-      if(mVerbose) std::cout << "implement raise action for state " << state_id << std::endl;
       fs << "  fsmImpl.sendEvent(\"" << state_id << "\", "  << action->Attribute("event") <<"(), 0);\n";
     }
     else if( std::string("send") == std::string(action->Name()))
     {
-      if(mVerbose) std::cout << "implement send action for state " << state_id << std::endl;
       std::string event = action->Attribute("event");
       fs <<  "  " << event << " data" << event << ";\n";
       const tinyxml2::XMLElement* para = action->FirstChildElement("param");
@@ -476,10 +501,10 @@ void YaFsmScxmlParser::genStateActions(std::ofstream& fs, const std::string& sta
       {
         YaFsm::printWarn("use of idlocation for send event not allowed!\n!");
       }
-      std::string delay = "0";
+      int delay = 0;
       if( action->Attribute("delay"))
       {
-        delay = action->Attribute("delay");
+        delay = delayToInt(action->Attribute("delay"));
       }
 
       fs << "  " << "fsmImpl.sendEvent( \"" << state_id << "\", data"<< event << ", " << delay << ");\n";
@@ -487,11 +512,8 @@ void YaFsmScxmlParser::genStateActions(std::ofstream& fs, const std::string& sta
     }
     else if( std::string("cancel") == std::string(action->Name()) )
     {
-      if(mVerbose) std::cout << "implement cancel action for state " << state_id << std::endl;
-
-      fs << "  fsmImpl.cancelEvent(\"" << state_id << "\", "  << action->Attribute("sendid") <<"(), 0);\n";
+      fs << "    fsmImpl.cancelEvent(\"" << action->Attribute("sendid") <<"\");\n";
     }
-
     action = action->NextSiblingElement();
   }
 
@@ -543,10 +565,10 @@ void YaFsmScxmlParser::genTransitionActions(std::ofstream& fs, const std::string
       {
         YaFsm::printWarn("use of idlocation for send event not allowed!\n!");
       }
-      std::string delay = "0";
+      int delay = 0;
       if( action->Attribute("delay"))
       {
-        delay = action->Attribute("delay");
+        delay = delayToInt(action->Attribute("delay"));
       }
 
       fs << "    " << "fsmImpl.sendEvent( \"" << event << "\", data"<< event << ", " << delay << ");\n";
@@ -556,7 +578,7 @@ void YaFsmScxmlParser::genTransitionActions(std::ofstream& fs, const std::string
     {
       if(mVerbose) std::cout << "implement cancel action for transition " << std::endl;
 
-      fs << "    fsmImpl.cancelEvent(\"" << event << "\", "  << action->Attribute("sendid") <<"(), 0);\n";
+      fs << "    fsmImpl.cancelEvent(\"" << action->Attribute("sendid") <<"\");\n";
     }
 
     action = action->NextSiblingElement();
@@ -575,8 +597,6 @@ void YaFsmScxmlParser::genStateImpl(std::ofstream& fh, std::ofstream& fs, const 
   }
 
   std::string state_id = state->Attribute("id");
-  if( mVerbose ) std::cout << "generating code for state " << state_id << std::endl;
-
 
   if(!parentName.empty())
   {
