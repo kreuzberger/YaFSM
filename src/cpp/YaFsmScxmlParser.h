@@ -51,6 +51,5 @@ private:
   std::map< std::string, const tinyxml2::XMLElement* > mStates;
   std::map< std::string, int > mTriggers;
   std::map< std::string, int > mEvents;
-  bool mbDataModel = false;
   bool mVerbose = false;
 };

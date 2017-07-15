@@ -98,7 +98,6 @@ void YaFsmScxmlParser::parseDefinitions(const tinyxml2::XMLElement* elem)
             mDataModel["type"] = elems[0];
             mDataModel["classname"] = elems[1];
             mDataModel["headerfile"] = elems[2];
-            mbDataModel = true;
           }
           else
           {
@@ -893,7 +892,12 @@ void YaFsmScxmlParser::writeFSMHeader( const tinyxml2::XMLElement * elem)
   fh << "  " << mDataModel["name"] << "()\n";
   fh << "  : mpoCurrentState( 0 )\n";
 
-  fh << "  , mDataModel()\n";
+  it = mDataModel.find("classname");
+  if( it != mDataModel.end())
+  {
+    fh << "  , mDataModel()\n";
+  }
+
   fh << "  , mbLockTrigger( false )\n";
   fh << "  , mbInit( false )\n";
   fh << "  , mFSMEvent( self() )\n";
@@ -1047,20 +1051,21 @@ void YaFsmScxmlParser::writeFSMHeader( const tinyxml2::XMLElement * elem)
     fh << "  std::map<int, " << (*it).first << "> mParaMap_" << (*it).first <<";\n";
   }
 
-// todo implement member handling
-  //  for( auto it = mMembers.begin(); it != mMembers.end(); ++it)
-//  {
-//    YaFsm::printDbg(std::string("found member ") + (*it).first);
-//    //const char* src = (*it).second->Attribute("src");
-//    const char* classname = (*it).second->Attribute("classname");
-//    if( classname ) YaFsm::printDbg("found classname in member");
-//    const char* id = (*it).second->Attribute("id");
-//    if( id ) YaFsm::printDbg("found id in member");
-//    if( classname && id)
-//    {
-//      fh << "  " << classname << " " << id << ";\n";
-//    }
-//  }
+  // there seems no better way, variants could be used instead.
+  // non necessary to handle members, they could also be part of the model.
+
+  for( auto it = mMembers.begin(); it != mMembers.end(); ++it)
+  {
+    //const char* src = (*it).second->Attribute("src");
+    //const char* classname = (*it).second->Attribute("classname");
+    const char* id = (*it).second->Attribute("id");
+    const char* expr = (*it).second->Attribute("expr");
+
+    if( id && expr)
+    {
+      fh << "  static const auto " << id << " = " << expr << ";\n";
+    }
+  }
   fh << "\n";
   fh << "};\n";
   fh << "\n";
