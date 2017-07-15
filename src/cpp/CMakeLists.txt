@@ -1,4 +1,4 @@
-project( xmlparsercpp )
+project( yafsmgencpp )
 
 
 macro (YAFSM_GENERATE_CPP outfiles)
@@ -22,13 +22,13 @@ macro (YAFSM_GENERATE_CPP outfiles)
     add_custom_command( OUTPUT ${outfile}
       COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code"
       COMMAND $<TARGET_FILE:yafsmgen> --fsm ${it}  --outcode ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code --verbose
-      DEPENDS ${it} ${YaFSM_GENERATOR_SOURCE_DIR} yafsmgen )
+      DEPENDS ${it} yafsmgen )
 
     foreach ( file ${fileCode} )
       add_custom_command(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${file}
-        COMMAND ${CMAKE_COMMAND} -E copy ${YaFSM_GENERATOR_SOURCE_DIR}/codeimpl/cpp/qt4/${file}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
-        DEPENDS ${YaFSM_GENERATOR_SOURCE_DIR}/codeimpl/cpp/qt4/${file}
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/src/cpp/codeimpl/cpp/qt4/${file}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/cpp/codeimpl/cpp/qt4/${file}
       )
       set( ${outfiles} ${${outfiles}} ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${file})
     endforeach( file )
@@ -36,8 +36,8 @@ macro (YAFSM_GENERATE_CPP outfiles)
     foreach ( fileI ${fileIfc} )
       add_custom_command(
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fileI}
-        COMMAND ${CMAKE_COMMAND} -E copy ${YaFSM_GENERATOR_SOURCE_DIR}/codeimpl/cpp/inc/${fileI}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
-        DEPENDS ${YaFSM_GENERATOR_SOURCE_DIR}/codeimpl/cpp/inc/${fileI}
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/src/cpp/codeimpl/cpp/inc/${fileI}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
+        DEPENDS ${CMAKE_SOURCE_DIR}/src/cpp/codeimpl/cpp/inc/${fileI}
       )
       set( ${outfiles} ${${outfiles}} ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fileI})
     endforeach( fileI )
