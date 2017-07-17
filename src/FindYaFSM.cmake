@@ -5,36 +5,29 @@
 include(CMakeParseArguments)
 
 
-if( NOT "${YAFSM_SCRIPT}" STREQUAL "" AND NOT "${YAFSM_SCRIPT}" STREQUAL "YAFSM_SCRIPT-NOTFOUND")
+if( NOT "${YAFSMGEN}" STREQUAL "" AND NOT "${YAFSMGEN}" STREQUAL "YAFSMGEN-NOTFOUND")
   set( YAFSM_FOUND true )
 else()
-  find_program(XMLLINT_EXECUTABLE xmllint )
   if( UNIX )
-    find_file(YAFSM_SCRIPT
-              NAMES YaFsm.pl
+    find_program(YAFSMGEN
+              NAMES yafsmgen
               PATHS  $ENV{PATH} /usr/local/yafsm
-              DOC "Perl script YaFsm.pl" )
+              DOC "yafsm executable" )
   else()
-    set(ENVPROGRAMFILES32 "PROGRAMFILES(X86)")
-    find_file(YAFSM_SCRIPT
-              NAMES YaFsm.pl
-              PATHS  $ENV{PATH} "$ENV{PROGRAMFILES}/YaFsm/yafsm" "$ENV{${ENVPROGRAMFILES32}}/YaFsm/yafsm"
+    set(ENVPROGRAMFILES32 "PROGRAMFILES")
+    find_program(YAFSMGEN
+              NAMES yafsmgen.exe
+              PATHS  $ENV{PATH} "$ENV{PROGRAMFILES}/YaFsm/yafsm"
               DOC "Perl script YaFsm.pl" )
   endif()
 
-  find_program(PERL_EXECUTABLE
-           NAMES perl perl.exe )
 
-  if( YAFSM_SCRIPT STREQUAL "YAFSM_SCRIPT-NOTFOUND" )
+  if( YAFSMGEN STREQUAL "YAFSMGEN-NOTFOUND" )
     set( YAFSM_INCLUDE_DIR )
     set( YAFSM_FOUND false )
   else()
-    if( NOT PERL_EXECUTABLE STREQUAL "PERL_EXECUTABLE-NOTFOUND" )
-      set( YAFSM_FOUND true )
-      #message(STATUS "YaFSM.pl was found")
-
       if(NOT YaFSM_FIND_QUIETLY)
-        message(STATUS "Found YaFSM! " ${YAFSM_SCRIPT})
+        message(STATUS "Found YaFSM! " ${YAFSMGEN})
       endif()
     endif()
 
@@ -52,7 +45,7 @@ endif()
 set( YAFSM_USE_FILE ${CMAKE_CURRENT_LIST_DIR}/FindYaFSM.cmake)
 
 if( YAFSM_FOUND )
- get_filename_component( YAFSM_INCLUDE_DIR ${YAFSM_SCRIPT} DIRECTORY )
+ get_filename_component( YAFSM_INCLUDE_DIR ${YAFSMGEN} DIRECTORY )
  set( YAFSM_INCLUDE_DIRS ${YAFSM_INCLUDE_DIR} )
 endif()
 
@@ -83,14 +76,14 @@ macro (YAFSM_GENERATE outfiles fsmFile)
   )
 
   add_custom_command( OUTPUT ${outfile}
-    COMMAND ${CMAKE_COMMAND} -E echo ${PERL_EXECUTABLE} -I${YAFSM_INCLUDE_DIR} -f ${YAFSM_SCRIPT} --fsm=${fsmFileAbsolute}  --gencode --outcode=${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code
-    COMMAND ${PERL_EXECUTABLE} -I${YAFSM_INCLUDE_DIR} -f ${YAFSM_SCRIPT} --fsm=${fsmFileAbsolute}  --gencode --outcode=${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code
-    DEPENDS ${fsmFileAbsolute} ${YAFSM_INCLUDE_DIRS}
+    COMMAND ${CMAKE_COMMAND} -E echo ${YAFSMGEN} --fsm ${fsmFileAbsolute} --outcode ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code
+    COMMAND ${YAFSMGEN} --fsm ${fsmFileAbsolute} --outcode ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code
+    DEPENDS ${fsmFileAbsolute} ${YAFSM_INCLUDE_DIRS} ${YAFSMGEN}
   )
   foreach ( file ${fileCode} )
     add_custom_command(
     OUTPUT ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${file}
-    COMMAND ${CMAKE_COMMAND} -E copy ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/qt4/${file}  ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/
+    COMMAND ${CMAKE_COMMAND} -E copy ${YAFSM_INCLUDE_DIRS}/qt4/${file}  ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/
     )
     set( ${outfiles} ${${outfiles}} ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${file})
   endforeach( file )
@@ -98,8 +91,8 @@ macro (YAFSM_GENERATE outfiles fsmFile)
   foreach ( fileI ${fileIfc} )
     add_custom_command(
       OUTPUT ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fileI}
-      COMMAND ${CMAKE_COMMAND} -E copy ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/inc/${fileI}  ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code
-      DEPENDS ${YAFSM_INCLUDE_DIRS}/codeimpl/cpp/inc/${fileI}
+      COMMAND ${CMAKE_COMMAND} -E copy ${YAFSM_INCLUDE_DIRS}/inc/${fileI}  ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code
+      DEPENDS ${YAFSM_INCLUDE_DIRS}/inc/${fileI}
     )
     set( ${outfiles} ${${outfiles}} ${YAFSM_OPTIONS_OUTPUT_DIRECTORY}/${fsm}/code/${fileI})
   endforeach( fileI )
