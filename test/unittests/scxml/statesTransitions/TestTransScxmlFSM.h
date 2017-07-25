@@ -10,18 +10,18 @@ class QTestTransScxmlFSM: public QObject
   Q_OBJECT
   public:
   QTestTransScxmlFSM()
-  : mTransScxmlFSM()
+  : mTransScxmlFSM(nullptr)
   {
-    mTransScxmlFSM.initFSM();
   }
 
   private slots:
     void initTestCase() {}
     void testInitFSM();
+    void testSecondCondition();
     void cleanupTestCase() { }
 
 public:
-  TransScxmlFSM mTransScxmlFSM;
+  TransScxmlFSM* mTransScxmlFSM = nullptr;
 
 private:
 inline QTestTransScxmlFSM& self() {return *this;}

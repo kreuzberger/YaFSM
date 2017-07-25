@@ -8,19 +8,20 @@ QTEST_MAIN(QTestTransScxmlFSM)
 void QTestTransScxmlFSM::testInitFSM()
 {
 
+  mTransScxmlFSM = new TransScxmlFSM();
+  mTransScxmlFSM->initFSM();
 
-
-  QSignalSpy spyEnterRunning(&mTransScxmlFSM.model(), SIGNAL(enterRunning(QString)));
-  QSignalSpy spyEnterFinal(&mTransScxmlFSM.model(), SIGNAL(enterFinal(QString)));
+  QSignalSpy spyEnterRunning(&mTransScxmlFSM->model(), SIGNAL(enterRunning(QString)));
+  QSignalSpy spyEnterFinal(&mTransScxmlFSM->model(), SIGNAL(enterFinal(QString)));
 
   QString str;
-  str = mTransScxmlFSM.getStateName().c_str();
+  str = mTransScxmlFSM->getStateName().c_str();
   QCOMPARE(QString("stop"),str);
 
   run a;
   a.mData.iValid = true;
-  mTransScxmlFSM.sendEvent(a);
-  str = mTransScxmlFSM.getStateName().c_str();
+  mTransScxmlFSM->sendEvent(a);
+  str = mTransScxmlFSM->getStateName().c_str();
   QCOMPARE(QString("running"),str);
 
   QCOMPARE(spyEnterRunning.count(), 1); // make sure the signal was emitted exactly one time
@@ -29,8 +30,8 @@ void QTestTransScxmlFSM::testInitFSM()
   QCOMPARE(args.at(0).toString(),QString("onEnterStop;onRun;onEnterRun;onEnterRunning"));
 
 
-  mTransScxmlFSM.sendEvent(end());
-  str = mTransScxmlFSM.getStateName().c_str();
+  mTransScxmlFSM->sendEvent(end());
+  str = mTransScxmlFSM->getStateName().c_str();
   QCOMPARE(QString("FinalState"),str);
 
   QCOMPARE(spyEnterFinal.count(), 1); // make sure the signal was emitted exactly one time
@@ -38,5 +39,37 @@ void QTestTransScxmlFSM::testInitFSM()
   QCOMPARE(args.length(), 1);
   QCOMPARE(args.at(0).toString(),QString("onExitRunning;onExitRun;onEnd;onEnterFinal"));
 
-  mTransScxmlFSM.dumpCoverage();
+  mTransScxmlFSM->dumpCoverage();
+  delete mTransScxmlFSM; mTransScxmlFSM = nullptr;
+}
+
+
+void QTestTransScxmlFSM::testSecondCondition()
+{
+
+
+  mTransScxmlFSM = new TransScxmlFSM();
+  mTransScxmlFSM->initFSM();
+
+  QSignalSpy spyEnterFinal(&mTransScxmlFSM->model(), SIGNAL(enterFinal(QString)));
+
+  QString str;
+  str = mTransScxmlFSM->getStateName().c_str();
+  QCOMPARE(QString("stop"),str);
+
+  run a;
+  a.mData.iValid = false;
+  mTransScxmlFSM->sendEvent(a);
+
+  str = mTransScxmlFSM->getStateName().c_str();
+  QCOMPARE(QString("FinalState"),str);
+
+  QCOMPARE(spyEnterFinal.count(), 1); // make sure the signal was emitted exactly one time
+  QList<QVariant> args = spyEnterFinal.takeFirst();
+  QCOMPARE(args.length(), 1);
+  QCOMPARE(args.at(0).toString(),QString("onEnterStop;onRunInvalid;onEnterFinal"));
+
+  mTransScxmlFSM->dumpCoverage();
+  mTransScxmlFSM->dumpCoverage();
+  delete mTransScxmlFSM; mTransScxmlFSM = nullptr;
 }

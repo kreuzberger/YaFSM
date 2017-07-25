@@ -13,9 +13,9 @@
         <onentry>
             <script>model.onEnterStop();</script>
         </onentry>
-        <transition type="external" event="run" target="run" cond="_event.data().iValid == false">
+        <transition type="external" event="run" target="FinalState" cond="_event.data().iValid == false">
             <qt:editorinfo endTargetFactors="2.49;18.24"/>
-            <script>assert(0);</script>
+            <script>model.onRunInvalid();</script>
         </transition>
     </state>
     <state id="run">

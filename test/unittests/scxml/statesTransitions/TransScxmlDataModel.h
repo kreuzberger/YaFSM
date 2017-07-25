@@ -42,6 +42,7 @@ signals:
 public:
   void onEnterStop()    { mTestState = "onEnterStop"; }
   void onRun()          { mTestState += ";onRun"; }
+  void onRunInvalid()   { mTestState += ";onRunInvalid"; }
   void onEnterRun()     { mTestState += ";onEnterRun";}
   void onEnterRunning() { mTestState += ";onEnterRunning"; emit enterRunning(mTestState); mTestState.clear(); }
 

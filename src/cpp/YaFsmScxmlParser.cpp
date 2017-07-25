@@ -783,53 +783,86 @@ void YaFsmScxmlParser::genTransImpl(std::ofstream &fh, std::ofstream &fs, const 
       fs << "  (void) fsmImpl;\n";
       auto it = mDataModel.find("classname");
 
-      std::string condition;
-      if(transition->Attribute("cond"))
-      {
-        condition = transition->Attribute("cond");
-      }
-      if(!condition.empty())
-      {
-        fs << "  if( " << condition << " )\n";
-      }
-      fs << "  {\n";
+      // iterate a second time for identical triggers with different conditions or triggers without conditions
+      const tinyxml2::XMLElement* transition2 = state->FirstChildElement("transition");
+      std::map<std::string, bool> processedConditions;
 
-      fs << "    fsmImpl.setTransByName(\"" << criteria << "\");\n";
-      // current could be difficult to determine. if we made a fallthrough into next hierarchy level
-      // exit state by name
-      if( source != target )
+      while(transition2)
       {
-        fs << "    fsmImpl.exitState(\"" <<  source << "\");\n" ;
-
-      }
-
-      if(hasActions("script",transition))
-      {
-        if( it != mDataModel.end())
+        std::string event2 = std::string(transition2->Attribute("event"));
+        std::string source2 = std::string(state->Attribute("id"));
+        std::string criteria2 = source2 + "_" + event2;
+        std::string condition2;
+        if(transition2->Attribute("cond"))
         {
-          fs << "    " << mDataModel["classname"] << "& model = fsmImpl.model();\n";
+          condition2 = transition2->Attribute("cond");
         }
 
+        auto itCondition = processedConditions.begin();
+        if(!condition2.empty())
+        {
+          itCondition = processedConditions.find(condition2);
+        }
+
+        if( criteria2 == criteria && (condition2.empty() || itCondition == processedConditions.end()))
+        {
+          if(!condition2.empty())
+          {
+            processedConditions[condition2]=true;
+          }
+
+          std::string target2 = source2;
+          if(transition2->Attribute("target"))
+          {
+            target2 = transition2->Attribute("target");
+          }
+
+          if(!condition2.empty())
+          {
+            fs << "  if( " << condition2 << " )\n";
+          }
+          fs << "  {\n";
+
+          fs << "    fsmImpl.setTransByName(\"" << criteria2 << "\");\n";
+          // current could be difficult to determine. if we made a fallthrough into next hierarchy level
+          // exit state by name
+          if( source2 != target2 )
+          {
+            fs << "    fsmImpl.exitState(\"" <<  source2 << "\");\n" ;
+
+          }
+
+          if(hasActions("script",transition2))
+          {
+            if( it != mDataModel.end())
+            {
+              fs << "    " << mDataModel["classname"] << "& model = fsmImpl.model();\n";
+            }
+
+          }
+
+          genTransitionActions(fs,event2,transition2);
+
+          if( source2 != target2 )
+          {
+            fs << "    fsmImpl.setStateByName(\"" << target2 <<  "\");\n";
+            fs << "    fsmImpl.enterCurrentState();\n";
+          }
+
+          if( !condition2.empty() && !parentName.empty())
+          {
+            fs << "  }\n";
+            fs << "  else // condition is not matched, we should now try if condition is matched by parent\n";
+            fs << "  {\n";
+
+            fs << "    State" << parentName << "::send_" << event2 << "( fsmImpl, " << event2 <<" );\n";
+          }
+
+          fs << "  }\n\n";
+        }
+        transition2 = transition2->NextSiblingElement("transition");
       }
 
-      genTransitionActions(fs,event,transition);
-
-      if( source != target )
-      {
-        fs << "    fsmImpl.setStateByName(\"" << target <<  "\");\n";
-        fs << "    fsmImpl.enterCurrentState();\n";
-      }
-
-      if( !condition.empty() && !parentName.empty())
-      {
-        fs << "  }\n";
-        fs << "  else // condition is not matched, we should now try if condition is matched by parent\n";
-        fs << "  {\n";
-
-        fs << "    State" << parentName << "::send_" << event << "( fsmImpl, " << event <<" );\n";
-      }
-
-      fs << "  }\n\n";
       fs << "}\n\n";
     }
     transition = transition->NextSiblingElement("transition");
