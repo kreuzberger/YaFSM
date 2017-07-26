@@ -43,6 +43,10 @@ void YaFsmScxmlParser::readFSM()
     {
       std::string name  = mFileName.substr(0,idx);
       idx = name.rfind(YaFsm::sep);
+      if( idx == std::string::npos)
+      {
+        idx = name.rfind("/");
+      }
       if( idx != std::string::npos)
       {
         name = name.substr(idx+1,name.length());
