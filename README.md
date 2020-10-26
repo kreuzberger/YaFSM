@@ -59,5 +59,5 @@ The fsm code generator has not to be build into an executable, cause it is a per
 
 Be aware that for unit tests the qt unittest framework is used and QT >= 4.5.2 is required.
 
-The generated source code will not compile if used out of the example build tree, cause some include and source code files are missing. These files must be copied „by hand“ or by our build environment to the generated source code or e.g linked by a library. This has the advantage that you could use our own implementation and framework for the timer and event handling. Provided is an implementation for Qt4 (full featured)
+The generated source code will not compile if used out of the example build tree, cause some include and source code files are missing. These files must be copied „by hand“ or by our build environment to the generated source code or e.g linked by a library. This has the advantage that you could use our own implementation and framework for the timer and event handling. Provided is an implementation for Qt5 (full featured)
 

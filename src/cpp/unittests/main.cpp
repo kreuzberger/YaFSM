@@ -3,9 +3,8 @@
 #include <string>
 #include <iostream>
 
-
-int main(int argc, char** argv)
-{  
+int main( int argc, char** argv )
+{
   bool bOk = false;
 
   YaFsmCppTest test;
@@ -13,5 +12,3 @@ int main(int argc, char** argv)
 
   return bOk;
 }
-
-

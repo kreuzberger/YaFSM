@@ -1,34 +1,20 @@
+#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
+#include <catch2/catch.hpp>
 
-#include "TestEventScxmlFSM.h"
-#include <QtTest/QTest>
-#include <QtTest/QSignalSpy>
+#define TESTFSM
+#include "EventScxmlFSM.h"
+#include <thread>
+#include <chrono>
 
-QTEST_MAIN(QTestEventScxmlFSM)
-
-void QTestEventScxmlFSM::testInitFSM()
+TEST_CASE( "init fsm" )
 {
+  EventScxmlFSM EventFSM;
+  EventFSM.initFSM();
+  REQUIRE( EventFSM.model().mTestState == "EnterStop" );
+  EventFSM.sendEvent( AutoStart() );
+  std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) );
+  REQUIRE( EventFSM.model().mEnterTestString == "TriggerAutoStart;ExitStop;AutoStart;EnterRun" );
+  REQUIRE( EventFSM.model().mExitTestString == "ExitRun;AutoEnd;EnterFinal" );
 
-  //std::string str = mpApp->mEventFSM.getStateName();
-  QSignalSpy spyEnterRun(&mpApp->mEventFSM.model(), SIGNAL(enterRun(QString)));
-  QSignalSpy spyExitRun(&mpApp->mEventFSM.model(), SIGNAL(exitRun(QString)));
-  QCOMPARE(mpApp->mEventFSM.model().mTestState,QString("EnterStop"));
-  mpApp->mEventFSM.sendEvent(AutoStart());
-  qApp->processEvents();
-  qApp->processEvents();
-  QTest::qWait(100); // wait for events to be delivered
-  QCOMPARE(spyEnterRun.count(), 1); // make sure the signal was emitted exactly one time
-  QList<QVariant> args = spyEnterRun.takeFirst();
-  QCOMPARE(args.length(), 1);
-  QCOMPARE(args.at(0).toString(),QString("TriggerAutoStart;ExitStop;AutoStart;EnterRun"));
-
-  QCOMPARE(spyExitRun.count(), 1); // make sure the signal was emitted exactly one time
-  args = spyExitRun.takeFirst();
-  QCOMPARE(args.length(), 1);
-  QCOMPARE(args.at(0).toString(),QString("ExitRun;AutoEnd;EnterFinal"));
-
-
-//  QCOMPARE(mpApp->mEventFSM.model().mTestState,std::string("Statefinished"));
-
-  mpApp->mEventFSM.dumpCoverage();
+  EventFSM.dumpCoverage();
 }
-

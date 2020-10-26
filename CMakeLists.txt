@@ -1,27 +1,43 @@
-cmake_minimum_required(VERSION 2.6)
-project(YaFsm)
+cmake_minimum_required(VERSION 3.9)
+project( YaFSM)
 
+if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+   message(FATAL_ERROR "In-source builds are not allowed.")
+endif()
 
-#set ( QT_QMAKE_EXECUTABLE /usr/bin/qmake-qt4 )
-#set ( QT4_QGLOBAL_FILE /usr/include/qt4/Qt/qglobal.h )
-set( DESIRED_QT_VERSION 4)
+include ( cmake/YaFSM.cmake )
 
-INCLUDE (${CMAKE_ROOT}/Modules/FindQt.cmake)
-#INCLUDE_DIRECTORIES( ${QT_INCLUDE_DIR} )
-if( UNIX )
-  include_directories(/usr/include)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -Wall -Woverloaded-virtual")
-else( )
-endif( )
+# Force C++ standard, do not fall back, do not use compiler extensions
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+# Set up Qt stuff:
+set(CMAKE_AUTOMOC OFF)
+set(CMAKE_AUTORCC OFF)
+set(CMAKE_AUTOUIC OFF)
+
+set(CMAKE_INSTALL_PREFIX "" )
+set( CMAKE_INSTALL_MESSAGE "LAZY" ) # one of NEVER, LAZY, ALWAYS
 
 enable_testing()
 include(CTest)
 
 
-include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-#ADD_DEFINITIONS( ${QT_DEFINITIONS} )
-add_subdirectory(src)
-add_subdirectory(test)
-add_subdirectory(doc)
 
+add_subdirectory(doc)
+add_subdirectory(src)
+
+find_package ( Threads REQUIRED)
+
+#find_package( Qt5 COMPONENTS Core)
+
+#if( TARGET Qt5::Core )
+  add_subdirectory(test)
+#else()
+#  message( WARNING "Disable automatic tests due to not configured Qt5::Core depenceny")
+#endif()
+
+add_subdirectory(dist)

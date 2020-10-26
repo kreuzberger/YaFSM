@@ -1,42 +1,27 @@
+#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
+#include <catch2/catch.hpp>
 
-#include "TestTimerScxmlFSM.h"
-#include <QtTest/QTest>
-#include <QtTest/QSignalSpy>
+#define TESTFSM
+#include "TimerScxmlFSM.h"
+#include <thread>
+#include <chrono>
 
-QTEST_MAIN(QTestTimerScxmlFSM)
-
-void QTestTimerScxmlFSM::testInitFSM()
+TEST_CASE( "init fsm" )
 {
+  TimerScxmlFSM TimerFSM;
+  TimerFSM.initFSM();
+  auto starttime = std::chrono::steady_clock::now();
+  TimerFSM.sendEvent( AutoStart() );
 
-  //std::string str = mpApp->mTimerFSM.getStateName();
-  QSignalSpy spyEnterRun(&mpApp->mTimerFSM.model(), SIGNAL(enterRun(QTime)));
-  QSignalSpy spyExitRun(&mpApp->mTimerFSM.model(), SIGNAL(exitRun(QTime)));
-  QTime starttime = QTime::currentTime();
-  mpApp->mTimerFSM.sendEvent(AutoStart());
-  qApp->processEvents();
-  qApp->processEvents();
+  std::this_thread::sleep_for( std::chrono::milliseconds( 4000 ) );
 
-  QTest::qWait(4000); // wait for events to be delivered
+  auto milliSecsTo = std::chrono::duration_cast<std::chrono::milliseconds>( TimerFSM.model().mEnterTime - starttime ).count();
+  // should be on second, but timer can have also negative latency
+  REQUIRE( milliSecsTo >= 900 );
 
+  milliSecsTo = std::chrono::duration_cast<std::chrono::milliseconds>( TimerFSM.model().mExitTime - starttime ).count();
+  // should be tow seconds, but timer can have also negative latency
+  REQUIRE( milliSecsTo >= 1900 );
 
-  QCOMPARE(spyEnterRun.count(), 1); // make sure the signal was emitted exactly one time
-  QList<QVariant> args = spyEnterRun.takeFirst();
-  QCOMPARE(args.length(), 1);
-  QTime runEnterTime = args.at(0).toTime();
-  int milliSecsTo = starttime.msecsTo(runEnterTime);
-  QVERIFY( milliSecsTo >= 1000);
-
-  QCOMPARE(spyExitRun.count(), 1); // make sure the signal was emitted exactly one time
-  args = spyExitRun.takeFirst();
-  QCOMPARE(args.length(), 1);
-  QTime runExitTime = args.at(0).toTime();
-  milliSecsTo = runEnterTime.msecsTo(runExitTime);
-  QVERIFY( milliSecsTo >= 2000);
-
-
-
-//  QCOMPARE(mpApp->mTimerFSM.model().mTestState,std::string("Statefinished"));
-
-  mpApp->mTimerFSM.dumpCoverage();
+  TimerFSM.dumpCoverage();
 }
-

@@ -1,40 +1,30 @@
+#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
+#include <catch2/catch.hpp>
 
-#include "TestSimpleScxmlFSM.h"
-#include <QtTest/QTest>
-#include <QtTest/QSignalSpy>
+#define TESTFSM
 
-QTEST_MAIN(QTestSimpleScxmlFSM)
+#include "SimpleScxmlFSM.h"
 
-void QTestSimpleScxmlFSM::testInitFSM()
+TEST_CASE( "init fsm" )
 {
+  SimpleScxmlFSM mSimpleScxmlFSM;
+  mSimpleScxmlFSM.initFSM();
 
-
-
-  QSignalSpy spyEnterRunning(&mSimpleScxmlFSM.model(), SIGNAL(enterRunning(QString)));
-  QSignalSpy spyEnterFinal(&mSimpleScxmlFSM.model(), SIGNAL(enterFinal(QString)));
-
-  QString str;
+  std::string str;
   str = mSimpleScxmlFSM.getStateName().c_str();
-  QCOMPARE(str, QString("stop"));
+  REQUIRE( str == "stop" );
 
-  mSimpleScxmlFSM.sendEvent(run());
+  mSimpleScxmlFSM.sendEvent( run() );
   str = mSimpleScxmlFSM.getStateName().c_str();
-  QCOMPARE(str, QString("running"));
+  REQUIRE( str == "running" );
 
-  QCOMPARE(spyEnterRunning.count(), 1); // make sure the signal was emitted exactly one time
-  QList<QVariant> args = spyEnterRunning.takeFirst();
-  QCOMPARE(args.length(), 1);
-  QCOMPARE(args.at(0).toString(),QString("onEnterStop;onRun;onEnterRun;onEnterRunning"));
+  REQUIRE( mSimpleScxmlFSM.model().currentTestString() == "onEnterStop;onRun;onEnterRun;onEnterRunning" );
 
-
-  mSimpleScxmlFSM.sendEvent(end());
+  mSimpleScxmlFSM.sendEvent( end() );
   str = mSimpleScxmlFSM.getStateName().c_str();
-  QCOMPARE(str, QString("FinalState"));
+  REQUIRE( str == "FinalState" );
 
-  QCOMPARE(spyEnterFinal.count(), 1); // make sure the signal was emitted exactly one time
-  args = spyEnterFinal.takeFirst();
-  QCOMPARE(args.length(), 1);
-  QCOMPARE(args.at(0).toString(),QString("onExitRunning;onExitRun;onEnd;onEnterFinal"));
+  REQUIRE( mSimpleScxmlFSM.model().currentTestString() == "onExitRunning;onExitRun;onEnd;onEnterFinal" );
 
   mSimpleScxmlFSM.dumpCoverage();
 }

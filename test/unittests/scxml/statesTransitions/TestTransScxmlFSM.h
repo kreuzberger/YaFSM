@@ -1,30 +1,26 @@
 
 #define TESTFSM
 
- 
 #include "TransScxmlFSM.h"
 
-
-class QTestTransScxmlFSM: public QObject
+class QTestTransScxmlFSM : public QObject
 {
   Q_OBJECT
-  public:
+public:
   QTestTransScxmlFSM()
-  : mTransScxmlFSM(nullptr)
+    : mTransScxmlFSM()
   {
+    mTransScxmlFSM.initFSM();
   }
 
-  private slots:
-    void initTestCase() {}
-    void testInitFSM();
-    void testSecondCondition();
-    void cleanupTestCase() { }
+private Q_SLOTS:
+  void initTestCase() {}
+  void testInitFSM();
+  void cleanupTestCase() {}
 
 public:
-  TransScxmlFSM* mTransScxmlFSM = nullptr;
+  TransScxmlFSM mTransScxmlFSM;
 
 private:
-inline QTestTransScxmlFSM& self() {return *this;}
-
-
+  inline QTestTransScxmlFSM& self() { return *this; }
 };

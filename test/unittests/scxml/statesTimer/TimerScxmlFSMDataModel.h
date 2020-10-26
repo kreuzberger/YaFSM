@@ -1,9 +1,7 @@
-#ifndef TIMERSCXMLFSMDATAMODEL_H
-#define TIMERSCXMLFSMDATAMODEL_H
+#pragma once
 
-
-#include <QtCore/QObject>
-#include <QtCore/QTime>
+#include <thread>
+#include <chrono>
 
 class AutoEnd
 {
@@ -13,7 +11,6 @@ class AutoStart
 {
 public:
   int i;
-
 };
 
 class Cancel
@@ -23,37 +20,41 @@ class Cancel
 class run
 {
 public:
-  run() : mCarType(0) {}
+  run()
+    : mCarType( 0 )
+  {
+  }
   int data() const { return mCarType; }
   int mCarType;
-
 };
 
-class TimerScxmlFSMDataModel: public QObject
+class TimerScxmlFSMDataModel
 {
-  Q_OBJECT
 public:
-  TimerScxmlFSMDataModel();
-  virtual ~TimerScxmlFSMDataModel();
-
-signals:
-  void enterRun(QTime);
-  void exitRun( QTime);
+  TimerScxmlFSMDataModel()          = default;
+  virtual ~TimerScxmlFSMDataModel() = default;
 
 public:
-  virtual void onEnterStop( void )   { mTestTime = QTime::currentTime(); }
-  virtual void onTriggerAutoStart( void )  { mTestTime = QTime::currentTime(); }
+  virtual void onEnterStop( void ) { mTestTime = std::chrono::steady_clock::now(); }
+  virtual void onTriggerAutoStart( void ) { mTestTime = std::chrono::steady_clock::now(); }
 
-  virtual void onExitStop( void )   { mTestTime = QTime::currentTime(); }
-  virtual void onAutoStart( void ) { mTestTime = QTime::currentTime();}
-  virtual void onEnterRun( void )   { mTestTime = QTime::currentTime(); emit enterRun(mTestTime); }
-  virtual void onExitRun( void )   { mTestTime = QTime::currentTime(); }
-  virtual void onAutoEnd( void )   { mTestTime = QTime::currentTime(); }
-  virtual void onEnterFinal( void )   { mTestTime = QTime::currentTime();; emit exitRun(mTestTime);  }
+  virtual void onExitStop( void ) { mTestTime = std::chrono::steady_clock::now(); }
+  virtual void onAutoStart( void ) { mTestTime = std::chrono::steady_clock::now(); }
+  virtual void onEnterRun( void )
+  {
+    mTestTime  = std::chrono::steady_clock::now();
+    mEnterTime = mTestTime;
+  }
+  virtual void onExitRun( void ) { mTestTime = std::chrono::steady_clock::now(); }
+  virtual void onAutoEnd( void ) { mTestTime = std::chrono::steady_clock::now(); }
+  virtual void onEnterFinal( void )
+  {
+    mTestTime = std::chrono::steady_clock::now();
+    mExitTime = mTestTime;
+  }
 
 public:
-  QTime mTestTime;
+  std::chrono::time_point<std::chrono::steady_clock> mTestTime;
+  std::chrono::time_point<std::chrono::steady_clock> mEnterTime;
+  std::chrono::time_point<std::chrono::steady_clock> mExitTime;
 };
-
-
-#endif

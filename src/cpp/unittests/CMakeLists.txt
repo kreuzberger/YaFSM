@@ -1,5 +1,6 @@
 project( xmlparsercpptest )
 
+include_directories(  ${YaFSM_SOURCE_DIR}/src )
 set( SRCS
   ${CMAKE_CURRENT_LIST_DIR}/../tinyxml/tinyxml2.cpp
   ${CMAKE_CURRENT_LIST_DIR}/main.cpp
