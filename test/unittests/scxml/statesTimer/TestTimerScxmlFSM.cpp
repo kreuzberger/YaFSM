@@ -1,5 +1,15 @@
-#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
-#include <catch2/catch.hpp>
+#define CATCH_CONFIG_RUNNER
+#include <QtCore/QCoreApplication>
+#include "catch2/catch.hpp" // include after defining CATCH_CONFIG_RUNNER
+
+#include <QtTest/QtTest>
+
+int main( int argc, char** argv )
+{
+  QCoreApplication app( argc, argv );
+  const int        res = Catch::Session().run( argc, argv );
+  return ( res < 0xff ? res : 0xff );
+}
 
 #define TESTFSM
 #include "TimerScxmlFSM.h"
@@ -13,7 +23,7 @@ TEST_CASE( "init fsm" )
   auto starttime = std::chrono::steady_clock::now();
   TimerFSM.sendEvent( AutoStart() );
 
-  std::this_thread::sleep_for( std::chrono::milliseconds( 4000 ) );
+  QTest::qWait( 4000 );
 
   auto milliSecsTo = std::chrono::duration_cast<std::chrono::milliseconds>( TimerFSM.model().mEnterTime - starttime ).count();
   // should be on second, but timer can have also negative latency

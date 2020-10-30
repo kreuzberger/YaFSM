@@ -47,7 +47,7 @@ int ScxmlFSMEvent::sendEventID( const std::string& sendId, int eventID, int dela
   {
     int               iActiveTimerID = startTimer( delayMs );
     ScxmlFSMEventInfo eventInfo( eventID, iActiveTimerID );
-    mActiveEventMap.insertMulti( sendId, eventInfo );
+    mActiveEventMap.insert( sendId, eventInfo );
     id = iActiveTimerID;
   }
   assert( 0 < id );

@@ -85,17 +85,17 @@ macro (YAFSM_GENERATE_CPP outfiles)
 
   add_custom_command( OUTPUT ${outfile}
     COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code"
-    COMMAND ${CMAKE_COMMAND} -E  echo $<TARGET_FILE:yafsmgen> --fsm ${it}  ${YAFSM_OPT} --outcode ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code --verbose
-    COMMAND $<TARGET_FILE:yafsmgen> --fsm ${it}  ${YAFSM_OPT} --outcode ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
-    DEPENDS ${it} yafsmgen )
+    COMMAND ${CMAKE_COMMAND} -E  echo $<TARGET_FILE:YaFSM::Generator> --fsm ${it}  ${YAFSM_OPT} --outcode ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code --verbose
+    COMMAND $<TARGET_FILE:YaFSM::Generator> --fsm ${it}  ${YAFSM_OPT} --outcode ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
+    DEPENDS ${it} YaFSM::Generator )
   set( ${outfiles} ${${outfiles}} ${outfile})
 
   foreach ( file ${fileCode} )
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${file}
-      COMMAND ${CMAKE_COMMAND} -E echo copy  ${YaFSM_SOURCE_DIR}/src/cpp/stl/${file}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
-      COMMAND ${CMAKE_COMMAND} -E copy  ${YaFSM_SOURCE_DIR}/src/cpp/stl/${file}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
-      DEPENDS  ${YaFSM_SOURCE_DIR}/src/cpp/stl/${file}
+      COMMAND ${CMAKE_COMMAND} -E echo copy  ${YaFSM_SOURCE_DIR}/src/cpp/qt/${file}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
+      COMMAND ${CMAKE_COMMAND} -E copy  ${YaFSM_SOURCE_DIR}/src/cpp/qt/${file}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
+      DEPENDS  ${YaFSM_SOURCE_DIR}/src/cpp/qt/${file}
     )
     set( ${outfiles} ${${outfiles}} ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${file})
   endforeach( file )
@@ -110,7 +110,7 @@ macro (YAFSM_GENERATE_CPP outfiles)
   endforeach( fileI )
 
   INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code )
-  #QT5_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/ScxmlFSMEvent.h)
-  #set( ${outfiles} ${${outfiles}} ${GENERATED_FSM_SRC_MOC_HEADERS})
-  set( ${outfiles} ${${outfiles}})
+  QT5_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/ScxmlFSMEvent.h)
+  set( ${outfiles} ${${outfiles}} ${GENERATED_FSM_SRC_MOC_HEADERS})
+#  set( ${outfiles} ${${outfiles}})
 endmacro( YAFSM_GENERATE_CPP )

@@ -1,5 +1,12 @@
-#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
-#include <catch2/catch.hpp>
+#define CATCH_CONFIG_RUNNER
+#include <QtCore/QCoreApplication>
+#include "catch2/catch.hpp" // include after defining CATCH_CONFIG_RUNNER
+int main( int argc, char** argv )
+{
+  QCoreApplication app( argc, argv );
+  const int        res = Catch::Session().run( argc, argv );
+  return ( res < 0xff ? res : 0xff );
+}
 
 #define TESTFSM
 

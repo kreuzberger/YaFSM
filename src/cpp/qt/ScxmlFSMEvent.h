@@ -3,7 +3,7 @@
 #include "IScxmlFSMEvent.h"
 #include "IScxmlFSMEventCB.h"
 #include <QtCore/QList>
-#include <QtCore/QMap>
+#include <QtCore/QMultiMap>
 #include <QtCore/QObject>
 
 class QTimerEvent;
@@ -43,7 +43,7 @@ private:
   ScxmlFSMEvent& operator=( const ScxmlFSMEvent& );
   ScxmlFSMEvent( const ScxmlFSMEvent& );
 
-  IScxmlFSMEventCB&                    mCbHandler;
-  QMap<int, int>                       mEventMap;
-  QMap<std::string, ScxmlFSMEventInfo> mActiveEventMap;
+  IScxmlFSMEventCB&                         mCbHandler;
+  QMap<int, int>                            mEventMap;
+  QMultiMap<std::string, ScxmlFSMEventInfo> mActiveEventMap;
 };
