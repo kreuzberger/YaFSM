@@ -30,6 +30,7 @@ include(CTest)
 add_subdirectory(doc)
 add_subdirectory(src)
 add_executable(YaFSM::Generator ALIAS yafsmgen)
+add_library( YaFSM::Code ALIAS Code )
 
 #find_package ( Threads REQUIRED)
 

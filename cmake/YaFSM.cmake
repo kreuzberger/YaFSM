@@ -34,15 +34,13 @@ Script to add Yet Another FSM scxml definitions to the build process.
 
 include(CMakeParseArguments)
 
-
-
 macro (YAFSM_GENERATE_CPP outfiles)
 
   set(options)
   set(oneValueArgs NAMESPACE FSM )
   set(multiValueArgs  )
 
-  cmake_parse_arguments( YAFSM_OPTIONS  "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments( YAFSM_OPTIONS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
   if( YAFSM_OPTIONS_NAMESPACE )
     set( YAFSM_OPT --namespace ${YAFSM_OPTIONS_NAMESPACE} )
@@ -90,21 +88,25 @@ macro (YAFSM_GENERATE_CPP outfiles)
     DEPENDS ${it} YaFSM::Generator )
   set( ${outfiles} ${${outfiles}} ${outfile})
 
+  get_target_property(YaFSM_CODE_SOURCE_DIR YaFSM::Code INTERFACE_SOURCES)
+
   foreach ( file ${fileCode} )
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${file}
-      COMMAND ${CMAKE_COMMAND} -E echo copy  ${YaFSM_SOURCE_DIR}/src/cpp/qt/${file}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
-      COMMAND ${CMAKE_COMMAND} -E copy  ${YaFSM_SOURCE_DIR}/src/cpp/qt/${file}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
-      DEPENDS  ${YaFSM_SOURCE_DIR}/src/cpp/qt/${file}
+      COMMAND ${CMAKE_COMMAND} -E echo copy  ${YaFSM_CODE_SOURCE_DIR}/${file}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
+      COMMAND ${CMAKE_COMMAND} -E copy  ${YaFSM_CODE_SOURCE_DIR}/${file}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
+      DEPENDS  ${YaFSM_CODE_SOURCE_DIR}/${file}
     )
     set( ${outfiles} ${${outfiles}} ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${file})
   endforeach( file )
 
+  get_target_property(YaFSM_CODE_INCLUDE_DIR YaFSM::Code INTERFACE_INCLUDE_DIRECTORIES)
+
   foreach ( fileI ${fileIfc} )
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fileI}
-      COMMAND ${CMAKE_COMMAND} -E copy ${YaFSM_SOURCE_DIR}/src/cpp/inc/${fileI}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
-      DEPENDS ${YaFSM_SOURCE_DIR}/src/cpp/inc/${fileI}
+      COMMAND ${CMAKE_COMMAND} -E copy ${YaFSM_CODE_INCLUDE_DIR}/${fileI}  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code
+      DEPENDS ${YaFSM_CODE_INCLUDE_DIR}/${fileI}
     )
     set( ${outfiles} ${${outfiles}} ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/${fileI})
   endforeach( fileI )
@@ -112,5 +114,4 @@ macro (YAFSM_GENERATE_CPP outfiles)
   INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code )
   QT5_WRAP_CPP( GENERATED_FSM_SRC_MOC_HEADERS  ${CMAKE_CURRENT_BINARY_DIR}/${fsm}/code/ScxmlFSMEvent.h)
   set( ${outfiles} ${${outfiles}} ${GENERATED_FSM_SRC_MOC_HEADERS})
-#  set( ${outfiles} ${${outfiles}})
 endmacro( YAFSM_GENERATE_CPP )

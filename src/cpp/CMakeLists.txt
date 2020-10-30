@@ -15,3 +15,8 @@ set( HDRS
 
 add_executable( yafsmgen ${SRCS} ${HDRS} )
 add_subdirectory(unittests)
+
+
+add_library( Code INTERFACE)
+set_target_properties( Code PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_LIST_DIR}/inc
+    INTERFACE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/qt")
