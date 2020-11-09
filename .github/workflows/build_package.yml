@@ -134,14 +134,28 @@ jobs:
         message("::set-output name=qt_dir::${qt_dir}")
         message("::set-output name=qt_base_url::${qt_base_url}")
         message("::set-output name=qt_version::${qt_version}")
+        
+        
+        function(downloadAndExtract url archive)
+          message("Downloading ${url}")
+          file(DOWNLOAD "${url}" ./${archive} SHOW_PROGRESS)
+          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ../${archive} WORKING_DIRECTORY qt5)
+        endfunction()
 
         foreach(package qtbase qtdeclarative qttools qtsvg qtxmlpatterns)
-          file(DOWNLOAD
-            "${qt_base_url}/${qt_package_name}/${package_version}${package}${package_suffix}.7z" ./${package}.7z
-            SHOW_PROGRESS
+          downloadAndExtract(
+            "${qt_base_url}/qt.qt5.${qt_version_dotless}.${qt_package_arch_suffix}/${qt_package_version}${package}${qt_package_suffix}.7z"
+            ${package}.7z
           )
-          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ../${package}.7z WORKING_DIRECTORY qt5)
         endforeach()
+
+        # core depends on icu
+        if ("${{ runner.os }}" STREQUAL "Linux")
+          downloadAndExtract(
+            "${qt_base_url}/qt.qt5.${qt_version_dotless}.${qt_package_arch_suffix}/${qt_package_version}icu-linux-Rhel7.2-x64.7z"
+            icu.7z
+          )
+        endif()
 
         file(READ "qt5/${qt_dir_prefix}/mkspecs/qconfig.pri" qtconfig)
         string(REPLACE "Enterprise" "OpenSource" qtconfig "${qtconfig}")
