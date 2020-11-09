@@ -1,4 +1,4 @@
-name: Build Sphinx Plugin
+name: Build Package
 
 # Trigger the workflow on push or pull request,
 # but only for the main branch
@@ -186,6 +186,7 @@ jobs:
           COMMAND cmake
             -G "Ninja"
             -DCMAKE_BUILD_TYPE=Release
+            ..
 
           RESULT_VARIABLE result
           WORKING_DIRECTORY build
