@@ -144,7 +144,7 @@ jobs:
 
         foreach(package qtbase qtdeclarative qttools qtsvg qtxmlpatterns)
           downloadAndExtract(
-            "${qt_base_url}/qt.qt5.${qt_version_dotless}.${qt_package_arch_suffix}/${qt_package_version}${package}${qt_package_suffix}.7z"
+            "${qt_base_url}/${qt_package_name}/${package_version}${package}${package_suffix}.7z"
             ${package}.7z
           )
         endforeach()
@@ -152,7 +152,7 @@ jobs:
         # core depends on icu
         if ("${{ runner.os }}" STREQUAL "Linux")
           downloadAndExtract(
-            "${qt_base_url}/qt.qt5.${qt_version_dotless}.${qt_package_arch_suffix}/${qt_package_version}icu-linux-Rhel7.2-x64.7z"
+            "${qt_base_url}/${qt_package_name}/${package_version}icu-linux-Rhel7.2-x64.7z"
             icu.7z
           )
         endif()
